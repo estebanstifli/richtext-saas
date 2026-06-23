@@ -11,6 +11,7 @@ export const messages = {
     login: "Log in",
     register: "Start writing",
     dashboard: "Dashboard",
+    billing: "Billing",
     upgrade: "Upgrade",
     logout: "Log out"
   },
@@ -151,7 +152,8 @@ export const messages = {
     planPastDue: "Payment needs attention",
     upgradeNotice: "Upgrade to create, edit, save, rename, and delete documents.",
     upgradeButton: "Upgrade",
-    createRequiresUpgrade: "Upgrade to create"
+    createRequiresUpgrade: "Upgrade to create",
+    billingPortalError: "Billing management is temporarily unavailable. Please try again in a moment."
   },
   editor: {
     backToDashboard: "Back to dashboard",

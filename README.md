@@ -144,9 +144,13 @@ The app handles these webhook events:
 
 Webhook processing is idempotent by storing processed Stripe event IDs on the `Subscription` row. The billing success page also retrieves the Checkout Session from Stripe and updates the backend, so access does not depend solely on the redirect or webhook timing.
 
+Authenticated users with a Stripe customer can open Stripe-hosted billing management from the app header. Enable Customer Portal in the Stripe Dashboard for the test account. The `/api/billing/portal` route creates a Stripe Customer Portal session server-side and redirects back to the dashboard if Stripe is unavailable.
+
 ### Webhook Fallback and Email Checks
 
 If a webhook is delayed or unavailable, the backend can still validate payment state against Stripe. The success page verifies the returned Checkout Session server-side, checks that `client_reference_id` belongs to the authenticated user, and then applies the same subscription update as the webhook. Dashboard and upgrade pages also reconcile recent completed Checkout Sessions for users who already have a stored `stripeCustomerId`.
+
+If Stripe itself is temporarily down, existing subscribers keep access as long as their locally stored subscription state is still valid. New Checkout sessions, billing portal sessions, and payment reconciliation require Stripe and surface a retry-later style error instead of unlocking access from the client.
 
 To inspect Stripe directly by customer email during support or review:
 
@@ -172,6 +176,7 @@ It verifies:
 - session cookie creation
 - non-paying dashboard upgrade path
 - server-side edit gating for non-paying users
+- billing portal route protection
 
 To run it against a deployed environment:
 

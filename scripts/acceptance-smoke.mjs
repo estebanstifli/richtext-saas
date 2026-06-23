@@ -92,6 +92,15 @@ await runStep("non-paying user cannot open or save documents", async () => {
   assert(saveResponse.status === 403, `Expected save to be forbidden for non-paying user, got ${saveResponse.status}`);
 });
 
+await runStep("billing portal is protected and requires a Stripe customer", async () => {
+  const response = await request("/api/billing/portal", {
+    method: "POST",
+    redirect: "manual"
+  });
+
+  assertRedirect(response, "/upgrade");
+});
+
 if (runStripeCheckout) {
   await runStep("Stripe Checkout sessions are created in test mode for every plan", async () => {
     for (const plan of planNames) {
@@ -193,11 +202,26 @@ function splitCombinedSetCookie(header) {
 
 function assertRedirect(response, expectedPath) {
   const location = response.headers.get("location") || "";
+  const redirectPath = normalizeRedirectPath(location);
+
   assert(
     response.status === 303 || response.status === 302 || response.status === 307 || response.status === 308,
     `Expected redirect to ${expectedPath}, got status ${response.status}`
   );
-  assert(location.startsWith(expectedPath), `Expected redirect to ${expectedPath}, got ${location || "(none)"}`);
+  assert(redirectPath.startsWith(expectedPath), `Expected redirect to ${expectedPath}, got ${location || "(none)"}`);
+}
+
+function normalizeRedirectPath(location) {
+  if (!location) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(location, baseUrl);
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return location;
+  }
 }
 
 function assertIncludes(text, expected) {

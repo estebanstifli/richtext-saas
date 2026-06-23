@@ -11,8 +11,14 @@ import { prisma } from "@/lib/prisma";
 import { syncLatestCheckoutSessionForUser } from "@/lib/stripe-sync";
 import { messages } from "@/messages/en";
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   let user = await requireUser();
+  const params = await searchParams;
+  const billingPortalError = params.billing === "portal-error";
 
   if (!hasPaidAccess(user.subscription) && user.stripeCustomerId) {
     try {
@@ -51,6 +57,12 @@ export default async function DashboardPage() {
         </div>
         <NewDocumentForm canCreate={canManageDocuments} suggestedTitle={suggestedDocumentTitle} />
       </div>
+
+      {billingPortalError ? (
+        <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          {messages.dashboard.billingPortalError}
+        </div>
+      ) : null}
 
       {subscriptionState !== "active" ? (
         <div className="mb-6 flex flex-col gap-3 rounded-lg border border-border bg-background p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">

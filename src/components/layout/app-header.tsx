@@ -1,4 +1,5 @@
 import type { Subscription, User } from "@prisma/client";
+import { CreditCard } from "lucide-react";
 import Link from "next/link";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -44,6 +45,14 @@ export function AppHeader({ user }: AppHeaderProps) {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {user.stripeCustomerId ? (
+            <form action="/api/billing/portal" method="POST">
+              <Button size="sm" title={messages.nav.billing} type="submit" variant="outline">
+                <CreditCard className="h-4 w-4" aria-hidden="true" />
+                {messages.nav.billing}
+              </Button>
+            </form>
+          ) : null}
           {state !== "active" ? (
             <Link className={buttonVariants({ variant: "outline", size: "sm" })} href="/upgrade">
               {messages.nav.upgrade}

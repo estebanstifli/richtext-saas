@@ -12,6 +12,8 @@ The app does not rely only on the browser redirect or only on the webhook. When 
 
 There is also a second recovery path: when a user with a stored `stripeCustomerId` reaches the dashboard or upgrade page but does not yet have active local access, the backend checks recent completed Checkout Sessions for that Stripe customer and reconciles the local subscription state. This covers the common case where Stripe accepted payment but the webhook is delayed, retried, or temporarily unavailable.
 
+If Stripe itself is unavailable, existing subscribers continue to use the editor from the locally stored entitlement as long as the saved subscription period is still valid. New subscriptions, billing portal sessions, and reconciliation attempts need Stripe, so they fail closed with a retry-later error rather than granting access from client-side state.
+
 For support and review, the project includes `npm run stripe:status -- user@example.com`. That command can inspect Stripe customers, active subscriptions, and completed Checkout Sessions by email. It is intentionally diagnostic only. The app does not grant access merely because an email appears paid in Stripe, because this MVP does not include email verification, Stripe can contain duplicate customers with the same email, and the billing email can differ from the login email.
 
 ## 3. One security decision and why
