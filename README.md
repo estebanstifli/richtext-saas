@@ -8,7 +8,9 @@ Draftly is a complete MVP SaaS rich text editor built with Next.js 15, TypeScrip
 - Email/password registration and login with `bcryptjs`.
 - Secure HttpOnly cookie sessions validated server-side.
 - Authenticated dashboard for creating, renaming, deleting, and opening documents.
+- Dashboard subscription summary with plan, status, and renewal date.
 - TipTap editor gated behind active paid access, with underline, text colors, highlight colors, links, images, image sizing, and text/image alignment.
+- Debounced autosave plus live word and character counts in the editor.
 - Stripe Checkout for monthly, annual, and lifetime plans.
 - Stripe webhook handling for `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, and `customer.subscription.deleted`.
 - Backend Checkout Session validation on the billing success page.
@@ -208,7 +210,7 @@ The test creates a disposable user with an `acceptance-...@example.com` email. I
 - Server Components fetch protected data and enforce route-level authorization.
 - Server Actions handle auth and dashboard document mutations.
 - Route Handlers handle Stripe, logout, and document save APIs.
-- TipTap content is stored as serialized JSON in a SQLite text column for simple portability. The editor uses StarterKit plus underline, text color, multicolor highlight, link, image, and alignment extensions for a richer MVP editing surface.
+- TipTap content is stored as serialized JSON in a SQLite text column for simple portability. The editor uses StarterKit plus underline, text color, multicolor highlight, link, image, character count, and alignment extensions for a richer MVP editing surface.
 - Uploaded editor images are validated server-side, stored under `public/uploads/{userId}/{documentId}`, and tracked in Prisma through `DocumentAsset`.
 - Subscription status is stored as strings instead of Prisma enums for SQLite compatibility.
 - User-facing copy is centralized in `src/messages/en.ts` to prepare for localization.

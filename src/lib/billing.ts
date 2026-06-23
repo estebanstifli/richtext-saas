@@ -60,3 +60,55 @@ export function getSubscriptionState(subscription: Subscription | null | undefin
 
   return "free";
 }
+
+export function getSubscriptionPlanLabel(subscription: Subscription | null | undefined) {
+  const plan = databaseValueToPlan(subscription?.plan);
+
+  if (subscription?.lifetimeAccess || subscription?.status === "LIFETIME" || plan === "lifetime") {
+    return messages.dashboard.planLifetime;
+  }
+
+  if (plan === "annual") {
+    return messages.dashboard.planAnnual;
+  }
+
+  if (plan === "monthly") {
+    return messages.dashboard.planMonthly;
+  }
+
+  return messages.dashboard.planFree;
+}
+
+export function getSubscriptionStatusLabel(subscription: Subscription | null | undefined) {
+  const state = getSubscriptionState(subscription);
+
+  if (state === "active") {
+    return messages.dashboard.statusActive;
+  }
+
+  if (state === "past_due") {
+    return messages.dashboard.statusPastDue;
+  }
+
+  if (subscription?.status === "CANCELED") {
+    return messages.dashboard.statusCanceled;
+  }
+
+  return messages.dashboard.statusFree;
+}
+
+export function getSubscriptionRenewalLabel(subscription: Subscription | null | undefined) {
+  if (subscription?.lifetimeAccess || subscription?.status === "LIFETIME") {
+    return messages.dashboard.renewsLifetime;
+  }
+
+  if (!subscription?.currentPeriodEnd) {
+    return messages.dashboard.renewsNone;
+  }
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric"
+  }).format(subscription.currentPeriodEnd);
+}

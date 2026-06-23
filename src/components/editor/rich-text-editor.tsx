@@ -1,5 +1,6 @@
 "use client";
 
+import CharacterCount from "@tiptap/extension-character-count";
 import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import ImageExtension from "@tiptap/extension-image";
@@ -7,7 +8,7 @@ import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import TextStyle from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
-import type { JSONContent } from "@tiptap/react";
+import type { Editor, JSONContent } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import {
@@ -40,7 +41,7 @@ import {
   Unlink2,
   X
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,10 @@ import { messages } from "@/messages/en";
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
 type ImageUploadState = "idle" | "uploading" | "error";
+type EditorStats = {
+  characters: number;
+  words: number;
+};
 
 type RichTextEditorProps = {
   documentId: string;
@@ -104,6 +109,8 @@ const RichImageExtension = ImageExtension.extend({
 export function RichTextEditor({ documentId, initialContent }: RichTextEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const lastSavedContentRef = useRef(JSON.stringify(initialContent));
+  const savingRef = useRef(false);
+  const [editorStats, setEditorStats] = useState<EditorStats>({ characters: 0, words: 0 });
   const [imageUploadState, setImageUploadState] = useState<ImageUploadState>("idle");
   const [linkUrl, setLinkUrl] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -111,6 +118,7 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
   const editor = useEditor({
     extensions: [
       StarterKit,
+      CharacterCount,
       TextStyle,
       Color,
       Underline,
@@ -144,11 +152,12 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
     },
     onUpdate({ editor: updatedEditor }) {
       const currentContent = JSON.stringify(updatedEditor.getJSON());
+      setEditorStats(getEditorStats(updatedEditor));
       setSaveState(currentContent === lastSavedContentRef.current ? "saved" : "dirty");
     }
   });
 
-  async function saveDocument() {
+  const saveDocument = useCallback(async () => {
     if (!editor) {
       return;
     }
@@ -160,6 +169,11 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
       return;
     }
 
+    if (savingRef.current) {
+      return;
+    }
+
+    savingRef.current = true;
     setSaveState("saving");
 
     try {
@@ -178,11 +192,33 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
       }
 
       lastSavedContentRef.current = currentContent;
-      setSaveState("saved");
+      setSaveState(JSON.stringify(editor.getJSON()) === currentContent ? "saved" : "dirty");
     } catch {
       setSaveState("error");
+    } finally {
+      savingRef.current = false;
     }
-  }
+  }, [documentId, editor]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    setEditorStats(getEditorStats(editor));
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor || saveState !== "dirty") {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      void saveDocument();
+    }, 2000);
+
+    return () => window.clearTimeout(timeout);
+  }, [editor, saveDocument, saveState]);
 
   const canSave = Boolean(editor && (saveState === "dirty" || saveState === "error"));
 
@@ -287,7 +323,7 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
     saveState === "saving"
       ? messages.editor.saving
       : saveState === "dirty"
-        ? messages.editor.dirty
+        ? messages.editor.autosaving
         : saveState === "error"
           ? messages.editor.saveFailed
           : messages.editor.saved;
@@ -567,7 +603,13 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
             </ToolbarButton>
           </form>
         ) : null}
-        <div className="flex items-center justify-between gap-3 lg:justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-3 lg:justify-end">
+          <span className="text-sm text-muted-foreground">
+            {messages.editor.words}: {editorStats.words}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {messages.editor.characters}: {editorStats.characters}
+          </span>
           {imageUploadState !== "idle" ? (
             <span className={cn("text-sm", imageUploadState === "error" ? "text-destructive" : "text-muted-foreground")}>
               {imageUploadState === "uploading" ? messages.editor.imageUploading : messages.editor.imageUploadFailed}
@@ -585,10 +627,12 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
           >
             {statusText}
           </span>
-          <Button disabled={!canSave || saveState === "saving"} onClick={saveDocument} type="button">
-            <Save aria-hidden="true" className="h-4 w-4" />
-            {saveState === "saving" ? messages.editor.saving : messages.editor.save}
-          </Button>
+          {canSave || saveState === "saving" ? (
+            <Button disabled={!canSave || saveState === "saving"} onClick={saveDocument} type="button">
+              <Save aria-hidden="true" className="h-4 w-4" />
+              {saveState === "saving" ? messages.editor.saving : messages.editor.saveNow}
+            </Button>
+          ) : null}
         </div>
       </div>
       <div className="p-5 sm:p-8">
@@ -610,6 +654,13 @@ function normalizeLinkUrl(rawUrl: string) {
   }
 
   return `https://${trimmedUrl}`;
+}
+
+function getEditorStats(editor: Editor): EditorStats {
+  return {
+    characters: editor.storage.characterCount.characters(),
+    words: editor.storage.characterCount.words()
+  };
 }
 
 function sanitizeImageWidth(width: unknown) {

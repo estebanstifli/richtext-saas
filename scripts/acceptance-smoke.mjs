@@ -68,6 +68,9 @@ await runStep("non-paying user sees upgrade path on dashboard", async () => {
   const html = await fetchText("/app/dashboard");
 
   assertIncludes(html, "Documents");
+  assertIncludes(html, "Plan");
+  assertIncludes(html, "Status");
+  assertIncludes(html, "Renews");
   assertIncludes(html, "Upgrade to create");
   assertIncludes(html, "Upgrade to create, edit, save, rename, and delete documents");
 });

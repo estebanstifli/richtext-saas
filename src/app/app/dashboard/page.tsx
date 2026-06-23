@@ -3,7 +3,13 @@ import Link from "next/link";
 import { DocumentRow } from "@/components/dashboard/document-row";
 import { NewDocumentForm } from "@/components/dashboard/new-document-form";
 import { buttonVariants } from "@/components/ui/button";
-import { getSubscriptionState, hasPaidAccess } from "@/lib/billing";
+import {
+  getSubscriptionPlanLabel,
+  getSubscriptionRenewalLabel,
+  getSubscriptionState,
+  getSubscriptionStatusLabel,
+  hasPaidAccess
+} from "@/lib/billing";
 import { formatDocumentDate, getNextDocumentTitle } from "@/lib/documents";
 import { requireUser } from "@/lib/auth";
 import { logger } from "@/lib/logger";
@@ -47,6 +53,20 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const subscriptionState = getSubscriptionState(user.subscription);
   const canManageDocuments = hasPaidAccess(user.subscription);
   const suggestedDocumentTitle = getNextDocumentTitle(documents);
+  const billingSummary = [
+    {
+      label: messages.dashboard.planLabel,
+      value: getSubscriptionPlanLabel(user.subscription)
+    },
+    {
+      label: messages.dashboard.statusLabel,
+      value: getSubscriptionStatusLabel(user.subscription)
+    },
+    {
+      label: messages.dashboard.renewsLabel,
+      value: getSubscriptionRenewalLabel(user.subscription)
+    }
+  ];
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
@@ -57,6 +77,18 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
         <NewDocumentForm canCreate={canManageDocuments} suggestedTitle={suggestedDocumentTitle} />
       </div>
+
+      <section className="mb-6">
+        <h2 className="sr-only">{messages.dashboard.billingSummaryTitle}</h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {billingSummary.map((item) => (
+            <div className="rounded-lg border border-border bg-background p-4 shadow-sm" key={item.label}>
+              <p className="text-xs font-medium uppercase tracking-normal text-muted-foreground">{item.label}</p>
+              <p className="mt-1 text-lg font-semibold tracking-normal">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {billingPortalError ? (
         <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
