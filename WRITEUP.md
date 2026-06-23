@@ -4,7 +4,7 @@
 
 The app keeps local billing state in the `Subscription` table and evaluates access in `src/lib/billing.ts`. A user has paid access when they have lifetime access (`lifetimeAccess = true` or status `LIFETIME`) or an active recurring subscription (`status = ACTIVE`) whose `currentPeriodEnd` has not expired. All paid document actions are protected server-side: the dashboard/editor pages, document creation, document update, rename, and delete paths check the authenticated user and their subscription state before allowing access.
 
-Stripe is the source of truth for payment events, while the database stores the latest known entitlement for fast authorization. Webhooks update `stripeCustomerId`, `stripeSubscriptionId`, plan, status, period end, and lifetime access. This gives the app a simple local decision model without trusting client-side state.
+Users who register but have no active plan, or who let a subscription lapse, retain read-only access to their own documents. They can view the document list and open any document to read its content, but the editor toolbar and save button are hidden and every write API still returns 403. This preserves their content without granting editing access they have not paid for. Webhooks update `stripeCustomerId`, `stripeSubscriptionId`, plan, status, period end, and lifetime access. This gives the app a simple local decision model without trusting client-side state.
 
 ## 2. What happens if payment succeeds but the webhook is delayed
 

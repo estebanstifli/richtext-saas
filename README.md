@@ -188,6 +188,7 @@ It verifies:
 - session cookie creation
 - non-paying dashboard upgrade path
 - server-side edit gating for non-paying users
+- read-only document access for non-paying users (content visible, all write actions blocked)
 - server-side image upload gating for non-paying users
 - billing portal route protection
 
@@ -212,6 +213,7 @@ The test creates a disposable user with an `acceptance-...@example.com` email. I
 - Route Handlers handle Stripe, logout, and document save APIs.
 - TipTap content is stored as serialized JSON in a SQLite text column for simple portability. The editor uses StarterKit plus underline, text color, multicolor highlight, link, image, character count, and alignment extensions for a richer MVP editing surface.
 - Uploaded editor images are validated server-side, stored under `public/uploads/{userId}/{documentId}`, and tracked in Prisma through `DocumentAsset`.
+- Non-subscribers retain read-only access to their own documents. The `editable` prop on `RichTextEditor` hides the toolbar and save controls for users without paid access. Every write path (document save PATCH, image upload POST, server actions for create/rename/delete) enforces the subscription check independently on the server, so the read-only UI is an affordance, not the security boundary.
 - Subscription status is stored as strings instead of Prisma enums for SQLite compatibility.
 - User-facing copy is centralized in `src/messages/en.ts` to prepare for localization.
 - UI primitives are small shadcn-style components instead of a full component registry install.
