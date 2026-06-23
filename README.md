@@ -70,6 +70,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+Run the acceptance smoke test against the local app:
+
+```bash
+npm run test:acceptance
+```
+
 ## Environment Variables
 
 ```bash
@@ -138,6 +144,37 @@ The app handles these webhook events:
 
 Webhook processing is idempotent by storing processed Stripe event IDs on the `Subscription` row. The billing success page also retrieves the Checkout Session from Stripe and updates the backend, so access does not depend solely on the redirect or webhook timing.
 
+## Acceptance Tests
+
+The repository includes a black-box acceptance smoke test that can run against local or deployed environments:
+
+```bash
+npm run test:acceptance
+```
+
+It verifies:
+
+- landing page product and pricing content
+- anonymous dashboard protection
+- email/password registration
+- session cookie creation
+- non-paying dashboard upgrade path
+- server-side edit gating for non-paying users
+
+To run it against a deployed environment:
+
+```bash
+TEST_BASE_URL="https://nodetest.andromedanova.com" npm run test:acceptance
+```
+
+To also verify that all three billing plans create Stripe Checkout Sessions in test mode:
+
+```bash
+TEST_BASE_URL="https://nodetest.andromedanova.com" TEST_STRIPE_CHECKOUT=true npm run test:acceptance
+```
+
+The test creates a disposable user with an `acceptance-...@example.com` email. It does not complete card payment; use Stripe test card `4242 4242 4242 4242` for the manual end-to-end payment and webhook check.
+
 ## Architecture Decisions
 
 - Server Components fetch protected data and enforce route-level authorization.
@@ -183,7 +220,7 @@ One security decision was to store only a SHA-256 hash of the session token in t
 - No team accounts.
 - No realtime collaboration.
 - No billing portal for self-service cancellation.
-- No automated test suite yet.
+- The automated smoke test does not complete card entry in Stripe Checkout.
 
 ## Verification
 
@@ -191,6 +228,7 @@ The project has been checked with:
 
 ```powershell
 npm run lint
+npm run test:acceptance
 $env:DATABASE_URL='file:./dev.db'; $env:NEXT_PUBLIC_APP_URL='http://localhost:3000'; npm run build
 ```
 
