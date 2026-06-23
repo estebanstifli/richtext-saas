@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test:acceptance": "node scripts/acceptance-smoke.mjs",
+    "stripe:status": "node scripts/stripe-status-by-email.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "db:push": "prisma db push",

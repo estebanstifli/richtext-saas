@@ -86,10 +86,10 @@ LOGGING_ENABLED="true"
 LOG_LEVEL="info"
 STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
-STRIPE_PRODUCT_ID="prod_UkyXSTlsn9WKYW"
-STRIPE_MONTHLY_PRICE_ID="price_1TlSa49cqPoekj5OvxlcUoUE"
-STRIPE_ANNUAL_PRICE_ID="price_1TlSa49cqPoekj5OzxMJioFk"
-STRIPE_LIFETIME_PRICE_ID="price_1TlSb19cqPoekj5OfzqhWRcd"
+STRIPE_PRODUCT_ID="prod_Ul2JSI4yxcIK5V"
+STRIPE_MONTHLY_PRICE_ID="price_1TlWF39cqPoekj5OFUkb3f4K"
+STRIPE_ANNUAL_PRICE_ID="price_1TlWFk9cqPoekj5OGCHwxT5f"
+STRIPE_LIFETIME_PRICE_ID="price_1TlWGQ9cqPoekj5OA9RY9eRY"
 ```
 
 `LOGGING_ENABLED=false` disables application logs. `LOG_LEVEL=debug` enables more verbose logging.
@@ -120,10 +120,10 @@ npm run prisma:migrate -- --name init
 
 Create one Stripe Product and three Stripe Prices:
 
-- Product: `prod_UkyXSTlsn9WKYW`
-- Monthly recurring price: `price_1TlSa49cqPoekj5OvxlcUoUE` (`€9.90/month`)
-- Annual recurring price: `price_1TlSa49cqPoekj5OzxMJioFk` (`€79/year`)
-- Lifetime one-time price: `price_1TlSb19cqPoekj5OfzqhWRcd` (`€199 once`)
+- Product: `prod_Ul2JSI4yxcIK5V`
+- Monthly recurring price: `price_1TlWF39cqPoekj5OFUkb3f4K` (`€9.90/month`)
+- Annual recurring price: `price_1TlWFk9cqPoekj5OGCHwxT5f` (`€79/year`)
+- Lifetime one-time price: `price_1TlWGQ9cqPoekj5OA9RY9eRY` (`€199 once`)
 
 Add their IDs to `.env`.
 
@@ -143,6 +143,14 @@ The app handles these webhook events:
 - `customer.subscription.deleted`
 
 Webhook processing is idempotent by storing processed Stripe event IDs on the `Subscription` row. The billing success page also retrieves the Checkout Session from Stripe and updates the backend, so access does not depend solely on the redirect or webhook timing.
+
+To inspect Stripe directly by customer email during support or review:
+
+```bash
+npm run stripe:status -- user@example.com
+```
+
+This script uses `STRIPE_SECRET_KEY`, searches Stripe customers by email, and reports active subscriptions plus completed Checkout Sessions. It is a diagnostic tool; the application itself grants access from the authenticated user's stored `stripeCustomerId`, Checkout Session ownership, and webhook/session reconciliation rather than trusting an arbitrary email lookup alone.
 
 ## Acceptance Tests
 
