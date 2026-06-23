@@ -144,13 +144,17 @@ The app handles these webhook events:
 
 Webhook processing is idempotent by storing processed Stripe event IDs on the `Subscription` row. The billing success page also retrieves the Checkout Session from Stripe and updates the backend, so access does not depend solely on the redirect or webhook timing.
 
+### Webhook Fallback and Email Checks
+
+If a webhook is delayed or unavailable, the backend can still validate payment state against Stripe. The success page verifies the returned Checkout Session server-side, checks that `client_reference_id` belongs to the authenticated user, and then applies the same subscription update as the webhook. Dashboard and upgrade pages also reconcile recent completed Checkout Sessions for users who already have a stored `stripeCustomerId`.
+
 To inspect Stripe directly by customer email during support or review:
 
 ```bash
 npm run stripe:status -- user@example.com
 ```
 
-This script uses `STRIPE_SECRET_KEY`, searches Stripe customers by email, and reports active subscriptions plus completed Checkout Sessions. It is a diagnostic tool; the application itself grants access from the authenticated user's stored `stripeCustomerId`, Checkout Session ownership, and webhook/session reconciliation rather than trusting an arbitrary email lookup alone.
+This script uses `STRIPE_SECRET_KEY`, searches Stripe customers by email, and reports active subscriptions plus completed Checkout Sessions. It is intentionally a diagnostic tool, not the authorization source. Because this MVP does not include email verification, granting access only because "this email has paid in Stripe" could be wrong: another person could register with that email, Stripe may contain multiple customers with the same email, and the billing email can differ from the login email. The application therefore grants access from the authenticated user's stored `stripeCustomerId`, Checkout Session ownership, and webhook/session reconciliation instead of trusting an arbitrary email lookup alone.
 
 ## Acceptance Tests
 
@@ -208,6 +212,8 @@ The test creates a disposable user with an `acceptance-...@example.com` email. I
 The app decides a user is an active subscriber through `src/lib/billing.ts`. Lifetime access is valid when `lifetimeAccess` is true or the subscription status is `LIFETIME`; recurring access is valid only when the status is `ACTIVE` and the current period has not expired.
 
 If payment succeeds but the webhook is delayed, the success page calls Stripe directly with the Checkout Session ID and applies the same backend subscription update. This means access is never granted only because the browser reached a success URL, but users are also not blocked unnecessarily while waiting for webhook delivery. As an additional recovery path, dashboard and upgrade pages reconcile the latest completed Stripe Checkout Session for users who already have a `stripeCustomerId` but do not yet show active access locally.
+
+Email-based Stripe checks are kept as support tooling only. The app does not treat email alone as proof of ownership because the assignment intentionally skips email verification and Stripe can contain duplicate customers or billing emails that do not match the login email.
 
 One security decision was to store only a SHA-256 hash of the session token in the database. The raw token lives only in the HttpOnly cookie, so a database leak does not immediately expose usable sessions. Every protected page and API revalidates that token server-side.
 
