@@ -1,4 +1,4 @@
-import { ArrowRight, FileText, LockKeyhole, Sparkles } from "lucide-react";
+import { ArrowRight, FileText, LockKeyhole, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
 
 import { SiteHeader } from "@/components/layout/site-header";
@@ -125,9 +125,14 @@ export default function LandingPage() {
 
         <section className="border-y border-border bg-muted/35 px-4 py-20 sm:px-6" id="pricing">
           <div className="mx-auto max-w-6xl">
-            <div className="mb-10 max-w-2xl space-y-3">
-              <h2 className="text-3xl font-bold tracking-normal">{messages.landing.pricingTitle}</h2>
-              <p className="text-muted-foreground">{messages.landing.pricingSubtitle}</p>
+            <div className="mb-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+              <div className="max-w-2xl space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-accent-foreground">
+                  <Zap aria-hidden="true" className="h-4 w-4" />
+                  {messages.landing.pricingTitle}
+                </div>
+                <p className="text-lg leading-8 text-muted-foreground">{messages.landing.pricingSubtitle}</p>
+              </div>
             </div>
             <PricingCards />
           </div>

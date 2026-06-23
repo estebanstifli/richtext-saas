@@ -44,8 +44,8 @@ export const messages = {
         description: "Monthly, annual, and lifetime plans run through Stripe Checkout and webhooks."
       }
     ],
-    pricingTitle: "Simple plans",
-    pricingSubtitle: "Choose the billing model that fits how you work.",
+    pricingTitle: "Choose the editor access that fits your rhythm",
+    pricingSubtitle: "Clear pricing in euros, with the annual plan tuned for the best long-term value.",
     faqTitle: "Questions",
     faqItems: [
       {
@@ -73,29 +73,35 @@ export const messages = {
     monthly: {
       key: "monthly",
       name: "Monthly",
-      price: "$12",
+      badge: "Flexible",
+      price: "€9.90",
       cadence: "/month",
+      note: "Pay as you go",
       description: "Flexible access for regular writing.",
       cta: "Choose monthly",
-      features: ["Full editor access", "Unlimited documents", "Cancel anytime"]
+      features: ["Full TipTap editor", "Unlimited documents", "Cancel anytime"]
     },
     annual: {
       key: "annual",
       name: "Annual",
-      price: "$96",
+      badge: "Best value",
+      price: "€79",
       cadence: "/year",
-      description: "Two months free for committed writers.",
+      note: "Save €39.80 yearly",
+      description: "The best plan for focused writers who use the editor every week.",
       cta: "Choose annual",
-      features: ["Full editor access", "Unlimited documents", "Priority product updates"]
+      features: ["Full TipTap editor", "Unlimited documents", "Priority product updates"]
     },
     lifetime: {
       key: "lifetime",
       name: "Lifetime",
-      price: "$249",
+      badge: "One-time",
+      price: "€199",
       cadence: "once",
-      description: "One payment for permanent access.",
+      note: "Permanent access",
+      description: "One payment for permanent access to the writing workspace.",
       cta: "Choose lifetime",
-      features: ["Full editor access", "Unlimited documents", "No recurring billing"]
+      features: ["Full TipTap editor", "Unlimited documents", "No recurring billing"]
     }
   },
   auth: {

@@ -80,9 +80,10 @@ LOGGING_ENABLED="true"
 LOG_LEVEL="info"
 STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
-STRIPE_MONTHLY_PRICE_ID="price_..."
-STRIPE_ANNUAL_PRICE_ID="price_..."
-STRIPE_LIFETIME_PRICE_ID="price_..."
+STRIPE_PRODUCT_ID="prod_UkyXSTlsn9WKYW"
+STRIPE_MONTHLY_PRICE_ID="price_1TlSa49cqPoekj5OvxlcUoUE"
+STRIPE_ANNUAL_PRICE_ID="price_1TlSa49cqPoekj5OzxMJioFk"
+STRIPE_LIFETIME_PRICE_ID="price_1TlSb19cqPoekj5OfzqhWRcd"
 ```
 
 `LOGGING_ENABLED=false` disables application logs. `LOG_LEVEL=debug` enables more verbose logging.
@@ -111,11 +112,12 @@ npm run prisma:migrate -- --name init
 
 ## Stripe Setup
 
-Create three Stripe Prices:
+Create one Stripe Product and three Stripe Prices:
 
-- Monthly recurring price
-- Annual recurring price
-- Lifetime one-time price
+- Product: `prod_UkyXSTlsn9WKYW`
+- Monthly recurring price: `price_1TlSa49cqPoekj5OvxlcUoUE` (`€9.90/month`)
+- Annual recurring price: `price_1TlSa49cqPoekj5OzxMJioFk` (`€79/year`)
+- Lifetime one-time price: `price_1TlSb19cqPoekj5OfzqhWRcd` (`€199 once`)
 
 Add their IDs to `.env`.
 
