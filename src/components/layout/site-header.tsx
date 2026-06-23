@@ -25,13 +25,7 @@ export async function SiteHeader() {
             {messages.nav.pricing}
           </Link>
           <Link className="hover:text-foreground" href="/#faq">
-            {messages.nav.security}
-          </Link>
-          <Link className="hover:text-foreground" href="/#features">
-            {messages.nav.about}
-          </Link>
-          <Link className="hover:text-foreground" href="/#pricing">
-            {messages.nav.contact}
+            {messages.nav.faq}
           </Link>
         </nav>
         <div className="flex items-center gap-2">

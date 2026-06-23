@@ -57,6 +57,7 @@ type EditorStats = {
 
 type RichTextEditorProps = {
   documentId: string;
+  editable?: boolean;
   initialContent: JSONContent;
 };
 
@@ -106,7 +107,7 @@ const RichImageExtension = ImageExtension.extend({
   }
 });
 
-export function RichTextEditor({ documentId, initialContent }: RichTextEditorProps) {
+export function RichTextEditor({ documentId, editable = true, initialContent }: RichTextEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const lastSavedContentRef = useRef(JSON.stringify(initialContent));
   const savingRef = useRef(false);
@@ -116,6 +117,7 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [showLinkEditor, setShowLinkEditor] = useState(false);
   const editor = useEditor({
+    editable,
     extensions: [
       StarterKit,
       CharacterCount,
@@ -328,6 +330,18 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
           ? messages.editor.saveFailed
           : messages.editor.saved;
   const selectedImageAttributes = editor?.isActive("image") ? editor.getAttributes("image") : null;
+
+  // Read-only mode renders just the content with no toolbar or save controls.
+  // The PATCH and asset upload APIs still enforce paid access server-side, so this is a UI affordance, not the security boundary.
+  if (!editable) {
+    return (
+      <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+        <div className="p-5 sm:p-8">
+          <EditorContent editor={editor} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">

@@ -7,9 +7,6 @@ export const messages = {
   nav: {
     features: "Features",
     pricing: "Pricing",
-    security: "Security",
-    about: "About",
-    contact: "Contact",
     faq: "FAQ",
     login: "Log in",
     register: "Start Writing",
@@ -175,13 +172,18 @@ export const messages = {
     renewsLifetime: "Lifetime access",
     renewsNone: "Not scheduled",
     upgradeNotice:
-      "Without an active paid plan, you can only access your dashboard list. Upgrade to create, open, edit, save, rename, and delete documents.",
+      "Without an active paid plan you can read your documents but not edit them. Upgrade to create, edit, save, rename, and delete documents.",
     upgradeButton: "Upgrade",
     createRequiresUpgrade: "Upgrade to create documents",
     billingPortalError: "Billing management is temporarily unavailable. Please try again in a moment."
   },
   editor: {
     backToDashboard: "Back to dashboard",
+    readOnlyBadge: "Read only",
+    readOnlyTitle: "You are viewing this document in read-only mode",
+    readOnlyNotice:
+      "Your current plan does not include editing. Upgrade to edit, save, rename, and manage this document.",
+    upgradeToEdit: "Upgrade to edit",
     save: "Save",
     saveNow: "Save now",
     saving: "Saving",

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, FilePenLine, Pencil, Trash2, X } from "lucide-react";
+import { Check, Eye, FilePenLine, Pencil, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -78,12 +78,16 @@ export function DocumentRow({ canManage, document }: DocumentRowProps) {
       <span className="hidden text-sm text-muted-foreground md:block">{document.updatedAtLabel}</span>
       <div className="flex items-center gap-2 md:justify-end">
         <Link
-          aria-label={messages.dashboard.editDocument}
+          aria-label={canManage ? messages.dashboard.editDocument : messages.dashboard.open}
           className={cn(buttonVariants({ variant: "outline", size: "icon" }), "h-9 w-9")}
           href={`/documents/${document.id}`}
-          title={messages.dashboard.editDocument}
+          title={canManage ? messages.dashboard.editDocument : messages.dashboard.open}
         >
-          <FilePenLine aria-hidden="true" className="h-4 w-4" />
+          {canManage ? (
+            <FilePenLine aria-hidden="true" className="h-4 w-4" />
+          ) : (
+            <Eye aria-hidden="true" className="h-4 w-4" />
+          )}
         </Link>
         {canManage ? (
           <>

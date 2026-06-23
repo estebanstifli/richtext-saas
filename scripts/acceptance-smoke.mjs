@@ -38,7 +38,7 @@ const createdEmail = `acceptance-${Date.now()}@example.com`;
 await runStep("landing page communicates product and pricing", async () => {
   const html = await fetchText("/");
 
-  assertIncludes(html, "Write, manage, and ship polished documents");
+  assertIncludes(html, "Write Better Content.");
   assertIncludes(html, "Monthly");
   assertIncludes(html, "Annual");
   assertIncludes(html, "Lifetime");
@@ -72,12 +72,16 @@ await runStep("non-paying user sees upgrade path on dashboard", async () => {
   assertIncludes(html, "Status");
   assertIncludes(html, "Renews");
   assertIncludes(html, "Upgrade to create");
-  assertIncludes(html, "Upgrade to create, edit, save, rename, and delete documents");
+  assertIncludes(html, "you can read your documents but not edit them");
 });
 
-await runStep("non-paying user cannot open or save documents", async () => {
+await runStep("non-paying user gets read-only access and cannot save documents", async () => {
+  // Missing document returns 404 (no longer redirected to upgrade): read access is allowed, write is not.
   const documentPage = await request("/documents/not-a-real-document", { redirect: "manual" });
-  assertRedirect(documentPage, "/upgrade");
+  assert(
+    documentPage.status === 404,
+    `Expected 404 for missing document in read-only mode, got ${documentPage.status}`
+  );
 
   const saveResponse = await request("/api/documents/not-a-real-document", {
     method: "PATCH",

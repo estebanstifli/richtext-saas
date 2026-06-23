@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { LockKeyhole } from "lucide-react";
 
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import { AppHeader } from "@/components/layout/app-header";
@@ -18,10 +19,8 @@ type DocumentPageProps = {
 
 export default async function DocumentPage({ params }: DocumentPageProps) {
   const user = await requireUser();
-
-  if (!hasPaidAccess(user.subscription)) {
-    redirect("/upgrade");
-  }
+  // Non-subscribers keep read access to their own documents; editing is gated below and on every write API.
+  const canEdit = hasPaidAccess(user.subscription);
 
   const { id } = await params;
   const document = await prisma.document.findFirst({
@@ -44,10 +43,29 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
             <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href="/app/dashboard">
               {messages.editor.backToDashboard}
             </Link>
-            <h1 className="mt-3 truncate text-3xl font-bold tracking-normal">{document.title}</h1>
+            <div className="mt-3 flex items-center gap-3">
+              <h1 className="truncate text-3xl font-bold tracking-normal">{document.title}</h1>
+              {!canEdit ? (
+                <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                  <LockKeyhole aria-hidden="true" className="h-3.5 w-3.5" />
+                  {messages.editor.readOnlyBadge}
+                </span>
+              ) : null}
+            </div>
           </div>
         </div>
-        <RichTextEditor documentId={document.id} initialContent={parseEditorContent(document.content)} />
+        {!canEdit ? (
+          <div className="mb-6 flex flex-col gap-3 rounded-lg border border-border bg-background p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">{messages.editor.readOnlyTitle}</p>
+              <p className="text-sm text-muted-foreground">{messages.editor.readOnlyNotice}</p>
+            </div>
+            <Link className={buttonVariants({ size: "sm" })} href="/upgrade">
+              {messages.editor.upgradeToEdit}
+            </Link>
+          </div>
+        ) : null}
+        <RichTextEditor documentId={document.id} editable={canEdit} initialContent={parseEditorContent(document.content)} />
       </main>
     </div>
   );
