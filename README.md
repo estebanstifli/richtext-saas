@@ -108,13 +108,22 @@ Useful commands:
 ```bash
 npm run prisma:generate
 npm run db:push
+npm run db:deploy
 npm run prisma:migrate
 ```
 
-For production, prefer migrations:
+For this SQLite MVP, `npm run db:deploy` is the deployment-safe schema sync command: it applies the current Prisma schema to the configured SQLite database and regenerates Prisma Client. Run it on the server after pulling changes that modify `prisma/schema.prisma`, such as the `DocumentAsset` table used for uploaded editor images.
+
+For larger production systems, prefer migrations:
 
 ```bash
 npm run prisma:migrate -- --name init
+```
+
+If a deployed server reports `The table main.document_assets does not exist`, the code has been deployed before the remote SQLite schema was synced. Run this in the deployed app directory, with the production `.env` present:
+
+```bash
+npm run db:deploy
 ```
 
 ## Stripe Setup
