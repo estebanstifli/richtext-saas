@@ -5,6 +5,9 @@ import { PricingCards } from "@/components/pricing/pricing-cards";
 import { Badge } from "@/components/ui/badge";
 import { hasPaidAccess } from "@/lib/billing";
 import { requireUser } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
+import { syncLatestCheckoutSessionForUser } from "@/lib/stripe-sync";
 import { messages } from "@/messages/en";
 
 type UpgradePageProps = {
@@ -12,10 +15,26 @@ type UpgradePageProps = {
 };
 
 export default async function UpgradePage({ searchParams }: UpgradePageProps) {
-  const user = await requireUser();
+  let user = await requireUser();
   const params = await searchParams;
   const selectedPlan = typeof params.plan === "string" ? params.plan : undefined;
   const error = params.error === "checkout";
+
+  if (!hasPaidAccess(user.subscription) && user.stripeCustomerId) {
+    try {
+      const synced = await syncLatestCheckoutSessionForUser(user.id, user.stripeCustomerId);
+
+      if (synced) {
+        user =
+          (await prisma.user.findUnique({
+            where: { id: user.id },
+            include: { subscription: true }
+          })) ?? user;
+      }
+    } catch (syncError) {
+      logger.error("Upgrade billing reconciliation failed", syncError);
+    }
+  }
 
   if (hasPaidAccess(user.subscription) && !selectedPlan) {
     redirect("/app/dashboard");

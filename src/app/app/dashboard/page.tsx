@@ -6,11 +6,30 @@ import { buttonVariants } from "@/components/ui/button";
 import { getSubscriptionState, hasPaidAccess } from "@/lib/billing";
 import { formatDocumentDate, getNextDocumentTitle } from "@/lib/documents";
 import { requireUser } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { syncLatestCheckoutSessionForUser } from "@/lib/stripe-sync";
 import { messages } from "@/messages/en";
 
 export default async function DashboardPage() {
-  const user = await requireUser();
+  let user = await requireUser();
+
+  if (!hasPaidAccess(user.subscription) && user.stripeCustomerId) {
+    try {
+      const synced = await syncLatestCheckoutSessionForUser(user.id, user.stripeCustomerId);
+
+      if (synced) {
+        user =
+          (await prisma.user.findUnique({
+            where: { id: user.id },
+            include: { subscription: true }
+          })) ?? user;
+      }
+    } catch (error) {
+      logger.error("Dashboard billing reconciliation failed", error);
+    }
+  }
+
   const documents = await prisma.document.findMany({
     where: {
       userId: user.id

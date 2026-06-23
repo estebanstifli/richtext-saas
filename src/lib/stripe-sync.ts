@@ -275,6 +275,28 @@ export async function syncCheckoutSession(sessionId: string, expectedUserId: str
   return applyCheckoutSession(session);
 }
 
+export async function syncLatestCheckoutSessionForUser(userId: string, customerId: string | null | undefined) {
+  if (!customerId) {
+    return false;
+  }
+
+  const sessions = await getStripe().checkout.sessions.list({
+    customer: customerId,
+    limit: 10,
+    expand: ["data.subscription"]
+  });
+
+  const completedSession = sessions.data.find((session) => {
+    return session.client_reference_id === userId && session.status === "complete";
+  });
+
+  if (!completedSession) {
+    return false;
+  }
+
+  return applyCheckoutSession(completedSession);
+}
+
 async function applyInvoicePaid(invoice: Stripe.Invoice, eventId: string) {
   const invoiceRecord = invoice as unknown as {
     subscription?: string | Stripe.Subscription | null;
