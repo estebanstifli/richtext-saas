@@ -8,7 +8,7 @@ Draftly is a complete MVP SaaS rich text editor built with Next.js 15, TypeScrip
 - Email/password registration and login with `bcryptjs`.
 - Secure HttpOnly cookie sessions validated server-side.
 - Authenticated dashboard for creating, renaming, deleting, and opening documents.
-- TipTap editor gated behind active paid access.
+- TipTap editor gated behind active paid access, with underline, highlight, links, and text alignment.
 - Stripe Checkout for monthly, annual, and lifetime plans.
 - Stripe webhook handling for `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, and `customer.subscription.deleted`.
 - Backend Checkout Session validation on the billing success page.
@@ -197,7 +197,7 @@ The test creates a disposable user with an `acceptance-...@example.com` email. I
 - Server Components fetch protected data and enforce route-level authorization.
 - Server Actions handle auth and dashboard document mutations.
 - Route Handlers handle Stripe, logout, and document save APIs.
-- TipTap content is stored as serialized JSON in a SQLite text column for simple portability.
+- TipTap content is stored as serialized JSON in a SQLite text column for simple portability. The editor uses StarterKit plus underline, highlight, link, and text alignment extensions for a richer MVP editing surface.
 - Subscription status is stored as strings instead of Prisma enums for SQLite compatibility.
 - User-facing copy is centralized in `src/messages/en.ts` to prepare for localization.
 - UI primitives are small shadcn-style components instead of a full component registry install.
