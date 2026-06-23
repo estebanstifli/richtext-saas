@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 34% 12%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 215 15% 42%;
+  --border: 214 22% 88%;
+  --primary: 167 74% 28%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 38 90% 91%;
+  --accent-foreground: 33 45% 18%;
+  --destructive: 0 72% 48%;
+  --destructive-foreground: 0 0% 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+::selection {
+  background: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.ProseMirror {
+  min-height: 56vh;
+  outline: none;
+}
+
+.ProseMirror > * + * {
+  margin-top: 0.85rem;
+}
+
+.ProseMirror h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5rem;
+}
+
+.ProseMirror ul {
+  list-style: disc;
+}
+
+.ProseMirror ol {
+  list-style: decimal;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  padding-left: 1rem;
+}
+
+.ProseMirror pre {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  background: hsl(222 34% 12%);
+  color: white;
+  padding: 1rem;
+}
