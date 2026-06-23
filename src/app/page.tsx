@@ -1,4 +1,5 @@
-import { ArrowRight, FileText, LockKeyhole, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, Cloud, FileText, ImageIcon, LockKeyhole, PenLine, PlayCircle, Sparkles, Zap } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { SiteHeader } from "@/components/layout/site-header";
@@ -12,84 +13,61 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main>
-        <section className="border-b border-border bg-muted/35">
-          <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_0.9fr] lg:py-16">
-            <div className="max-w-2xl space-y-7">
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">
-                {messages.landing.heroEyebrow}
-              </p>
-              <div className="space-y-5">
-                <h1 className="text-4xl font-bold leading-tight tracking-normal sm:text-5xl lg:text-6xl">
-                  {messages.landing.heroTitle}
+        <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-background via-accent/20 to-accent/50">
+          <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
+            <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.05fr]">
+              <div className="max-w-xl space-y-7">
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+                  <Sparkles aria-hidden="true" className="h-4 w-4" />
+                  {messages.landing.heroBadge}
+                </span>
+                <h1 className="text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
+                  {messages.landing.heroTitleTop}
+                  <br />
+                  <span className="text-primary">{messages.landing.heroTitleAccent}</span>
                 </h1>
-                <p className="max-w-xl text-lg leading-8 text-muted-foreground">{messages.landing.heroSubtitle}</p>
+                <p className="max-w-lg text-lg leading-8 text-muted-foreground">
+                  {messages.landing.heroSubtitle}
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Link className={buttonVariants({ size: "default" })} href="/register">
+                    {messages.landing.heroPrimaryCta}
+                    <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                  </Link>
+                  <Link className={buttonVariants({ variant: "outline" })} href="/#pricing">
+                    <PlayCircle aria-hidden="true" className="h-4 w-4" />
+                    {messages.landing.heroSecondaryCta}
+                  </Link>
+                </div>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link className={buttonVariants({ size: "default" })} href="/register">
-                  {messages.landing.heroPrimaryCta}
-                  <ArrowRight aria-hidden="true" className="h-4 w-4" />
-                </Link>
-                <Link className={buttonVariants({ variant: "outline" })} href="/#pricing">
-                  {messages.landing.heroSecondaryCta}
-                </Link>
+              <div className="relative lg:-mr-10">
+                <div className="pointer-events-none absolute -inset-6 -z-10 rounded-[2.5rem] bg-primary/10 blur-3xl" />
+                <Image
+                  alt={messages.landing.heroImageAlt}
+                  className="h-auto w-full drop-shadow-2xl"
+                  height={768}
+                  priority
+                  src="/landing/laptop-hero.png"
+                  width={1152}
+                />
               </div>
             </div>
-            <div className="rounded-lg border border-border bg-background shadow-xl">
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <span className="h-3 w-3 rounded-full bg-destructive" />
-                  <span className="h-3 w-3 rounded-full bg-amber-400" />
-                  <span className="h-3 w-3 rounded-full bg-primary" />
-                </div>
-                <span className="text-xs font-medium text-muted-foreground">{messages.appName}</span>
-              </div>
-              <div className="grid gap-0 md:grid-cols-[160px_1fr]">
-                <aside className="hidden border-r border-border bg-muted/60 p-4 md:block">
-                  <div className="mb-4 h-3 w-20 rounded bg-muted-foreground/20" />
-                  <div className="space-y-3">
-                    <div className="rounded-md bg-background p-3 text-xs font-medium shadow-sm">
-                      {messages.landing.preview.documents[0]}
-                    </div>
-                    <div className="rounded-md p-3 text-xs text-muted-foreground">
-                      {messages.landing.preview.documents[1]}
-                    </div>
-                    <div className="rounded-md p-3 text-xs text-muted-foreground">
-                      {messages.landing.preview.documents[2]}
-                    </div>
+            <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {messages.landing.heroHighlights.map((highlight, index) => {
+                const Icon = [PenLine, ImageIcon, Cloud, LockKeyhole][index] ?? PenLine;
+                return (
+                  <div
+                    key={highlight.title}
+                    className="rounded-xl border border-border bg-background/70 p-5 shadow-sm backdrop-blur-sm"
+                  >
+                    <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-accent text-primary">
+                      <Icon aria-hidden="true" className="h-5 w-5" />
+                    </span>
+                    <h3 className="text-base font-semibold">{highlight.title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{highlight.description}</p>
                   </div>
-                </aside>
-                <div className="p-5 sm:p-6">
-                  <div className="mb-5 flex flex-wrap gap-2 border-b border-border pb-4">
-                    <span className="rounded-md bg-muted px-2.5 py-1 text-xs font-semibold">
-                      {messages.landing.preview.toolbar[0]}
-                    </span>
-                    <span className="rounded-md bg-muted px-2.5 py-1 text-xs italic">
-                      {messages.landing.preview.toolbar[1]}
-                    </span>
-                    <span className="rounded-md bg-muted px-2.5 py-1 text-xs">
-                      {messages.landing.preview.toolbar[2]}
-                    </span>
-                    <span className="rounded-md bg-muted px-2.5 py-1 text-xs">
-                      {messages.landing.preview.toolbar[3]}
-                    </span>
-                  </div>
-                  <article className="space-y-4">
-                    <div className="h-8 w-3/4 rounded bg-foreground/90" />
-                    <div className="space-y-2">
-                      <div className="h-3 rounded bg-muted-foreground/20" />
-                      <div className="h-3 w-11/12 rounded bg-muted-foreground/20" />
-                      <div className="h-3 w-4/5 rounded bg-muted-foreground/20" />
-                    </div>
-                    <div className="rounded-md border-l-4 border-primary bg-accent/80 p-4">
-                      <div className="h-3 w-10/12 rounded bg-accent-foreground/30" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-3 w-5/6 rounded bg-muted-foreground/20" />
-                      <div className="h-3 w-2/3 rounded bg-muted-foreground/20" />
-                    </div>
-                  </article>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
         </section>

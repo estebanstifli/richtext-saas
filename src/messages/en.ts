@@ -7,9 +7,12 @@ export const messages = {
   nav: {
     features: "Features",
     pricing: "Pricing",
+    security: "Security",
+    about: "About",
+    contact: "Contact",
     faq: "FAQ",
     login: "Log in",
-    register: "Start writing",
+    register: "Start Writing",
     dashboard: "Dashboard",
     billing: "Billing",
     upgrade: "Upgrade",
@@ -19,16 +22,20 @@ export const messages = {
     home: "Home"
   },
   landing: {
-    heroEyebrow: "Rich text editing for focused teams",
-    heroTitle: "Write, manage, and ship polished documents from one clean workspace.",
+    heroBadge: "Modern Writing. Powerful ideas.",
+    heroTitleTop: "Write Better Content.",
+    heroTitleAccent: "Anywhere.",
     heroSubtitle:
-      "Draftly combines a TipTap-powered editor, secure accounts, Stripe billing, and lightweight document management in a production-ready SaaS foundation.",
-    heroPrimaryCta: "Start free",
-    heroSecondaryCta: "View pricing",
-    preview: {
-      documents: ["Launch brief", "Meeting notes", "Editorial plan"],
-      toolbar: ["B", "I", "H1", "List"]
-    },
+      "Draftly is a modern rich text editor for creators, bloggers and teams. Write, format, and organize your ideas with ease.",
+    heroPrimaryCta: "Start Writing",
+    heroSecondaryCta: "View Pricing",
+    heroImageAlt: "Draftly rich text editor shown on a laptop",
+    heroHighlights: [
+      { title: "Rich Text Editor", description: "Format beautifully with ease" },
+      { title: "Image Uploads", description: "Add and manage images seamlessly" },
+      { title: "Cloud Storage", description: "Your documents, safe and secure" },
+      { title: "Secure & Private", description: "Enterprise-grade security" }
+    ],
     featuresTitle: "Everything needed for a useful writing workspace",
     featuresSubtitle: "A deliberately simple MVP with the pieces that matter for a real SaaS launch.",
     features: [
@@ -47,27 +54,31 @@ export const messages = {
     ],
     pricingTitle: "Choose the editor access that fits your rhythm",
     pricingSubtitle: "Clear pricing in euros, with the annual plan tuned for the best long-term value.",
-    faqTitle: "Questions",
+    faqTitle: "FAQ for writers",
     faqItems: [
       {
-        question: "Can I use Draftly without paying?",
-        answer: "Yes. You can register and view the upgrade path, but document creation and editing require an active paid plan."
+        question: "Is there a free editing plan?",
+        answer:
+          "No. Draftly does not include a free editing plan. You can create an account, but writing features require an active paid subscription."
       },
       {
-        question: "Does Draftly use external authentication providers?",
-        answer: "No. Authentication is handled with email, password hashing, and secure HttpOnly session cookies."
+        question: "What happens if I stop paying my subscription?",
+        answer:
+          "Your documents remain in your account. You can still access the dashboard and see your document list, but creating, opening the editor, editing, renaming, deleting, and saving are locked until payment is active again."
       },
       {
-        question: "What happens if a Stripe webhook is delayed?",
-        answer: "The billing success page validates the Checkout Session directly with Stripe before unlocking access."
+        question: "Can I change or cancel my plan anytime?",
+        answer:
+          "Yes. Monthly and annual plans can be managed from the billing portal. Lifetime is a one-time purchase with no recurring billing."
       },
       {
-        question: "Is this built for teams?",
-        answer: "No. This MVP intentionally supports single-user accounts only."
+        question: "Will I lose my texts if a payment fails?",
+        answer:
+          "No. Your documents stay stored in your account. Once billing is resolved, paid editing access is restored."
       }
     ],
     ctaTitle: "Ready to create your writing workspace?",
-    ctaSubtitle: "Create an account, choose a plan when you are ready, and start editing.",
+    ctaSubtitle: "Create an account, activate a paid plan, and start writing right away.",
     ctaButton: "Create account"
   },
   pricing: {
@@ -109,7 +120,7 @@ export const messages = {
     loginTitle: "Welcome back",
     loginSubtitle: "Log in to continue writing.",
     registerTitle: "Create your account",
-    registerSubtitle: "Start with document management for free.",
+    registerSubtitle: "Create your account and activate a paid plan to start writing.",
     emailLabel: "Email",
     passwordLabel: "Password",
     passwordHelp: "Use at least 8 characters.",
@@ -147,7 +158,7 @@ export const messages = {
     deleteDocument: "Delete document",
     confirmDelete: "Delete this document? This cannot be undone.",
     untitled: "Untitled Document",
-    planFree: "Free",
+    planFree: "No active plan",
     planMonthly: "Monthly",
     planAnnual: "Annual",
     planLifetime: "Lifetime",
@@ -160,12 +171,13 @@ export const messages = {
     statusActive: "Active",
     statusPastDue: "Past due",
     statusCanceled: "Canceled",
-    statusFree: "Free",
+    statusFree: "No active plan",
     renewsLifetime: "Lifetime access",
     renewsNone: "Not scheduled",
-    upgradeNotice: "Upgrade to create, edit, save, rename, and delete documents.",
+    upgradeNotice:
+      "Without an active paid plan, you can only access your dashboard list. Upgrade to create, open, edit, save, rename, and delete documents.",
     upgradeButton: "Upgrade",
-    createRequiresUpgrade: "Upgrade to create",
+    createRequiresUpgrade: "Upgrade to create documents",
     billingPortalError: "Billing management is temporarily unavailable. Please try again in a moment."
   },
   editor: {
