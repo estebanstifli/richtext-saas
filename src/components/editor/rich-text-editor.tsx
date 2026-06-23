@@ -1,9 +1,11 @@
 "use client";
 
+import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import ImageExtension from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
+import TextStyle from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
 import type { JSONContent } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -13,6 +15,7 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
+  Brush,
   Check,
   Code2,
   Heading1,
@@ -23,6 +26,10 @@ import {
   List,
   ListOrdered,
   Loader2,
+  Maximize2,
+  Minimize2,
+  PanelLeft,
+  PanelRight,
   Pilcrow,
   Quote,
   Redo2,
@@ -48,6 +55,52 @@ type RichTextEditorProps = {
   initialContent: JSONContent;
 };
 
+const imageWidthOptions = [
+  { label: "Small image", value: "35%" },
+  { label: "Medium image", value: "55%" },
+  { label: "Large image", value: "75%" },
+  { label: "Full width image", value: "100%" }
+] as const;
+
+const textColorOptions = [
+  { label: "Slate text", value: "#0f172a" },
+  { label: "Red text", value: "#dc2626" },
+  { label: "Amber text", value: "#d97706" },
+  { label: "Emerald text", value: "#059669" },
+  { label: "Blue text", value: "#2563eb" },
+  { label: "Violet text", value: "#7c3aed" }
+] as const;
+
+const highlightColorOptions = [
+  { label: "Yellow highlight", value: "#fef08a" },
+  { label: "Green highlight", value: "#bbf7d0" },
+  { label: "Blue highlight", value: "#bfdbfe" },
+  { label: "Pink highlight", value: "#fbcfe8" }
+] as const;
+
+const RichImageExtension = ImageExtension.extend({
+  addAttributes() {
+    return {
+      ...(this.parent?.() ?? {}),
+      align: {
+        default: "center",
+        parseHTML: (element) => element.getAttribute("data-align") || "center",
+        renderHTML: (attributes) => ({
+          "data-align": sanitizeImageAlign(attributes.align)
+        })
+      },
+      width: {
+        default: "100%",
+        parseHTML: (element) => element.getAttribute("data-width") || element.style.width || "100%",
+        renderHTML: (attributes) => ({
+          "data-width": sanitizeImageWidth(attributes.width),
+          style: getImageStyle(attributes.width, attributes.align)
+        })
+      }
+    };
+  }
+});
+
 export function RichTextEditor({ documentId, initialContent }: RichTextEditorProps) {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const lastSavedContentRef = useRef(JSON.stringify(initialContent));
@@ -58,12 +111,16 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
   const editor = useEditor({
     extensions: [
       StarterKit,
+      TextStyle,
+      Color,
       Underline,
-      Highlight,
-      ImageExtension.configure({
+      Highlight.configure({
+        multicolor: true
+      }),
+      RichImageExtension.configure({
         allowBase64: false,
         HTMLAttributes: {
-          class: "my-6 max-h-[520px] w-full rounded-md border border-border object-contain"
+          class: "max-h-[520px] rounded-md border border-border object-contain"
         }
       }),
       TextAlign.configure({
@@ -165,6 +222,26 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
     setShowLinkEditor(false);
   }
 
+  function setTextColor(color: string) {
+    editor?.chain().focus().setColor(color).run();
+  }
+
+  function clearTextColor() {
+    editor?.chain().focus().unsetColor().run();
+  }
+
+  function setHighlightColor(color: string) {
+    editor?.chain().focus().toggleHighlight({ color }).run();
+  }
+
+  function clearHighlightColor() {
+    editor?.chain().focus().unsetHighlight().run();
+  }
+
+  function updateSelectedImage(attributes: { align?: "left" | "center" | "right"; width?: string }) {
+    editor?.chain().focus().updateAttributes("image", attributes).run();
+  }
+
   async function uploadImage(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
@@ -214,6 +291,7 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
         : saveState === "error"
           ? messages.editor.saveFailed
           : messages.editor.saved;
+  const selectedImageAttributes = editor?.isActive("image") ? editor.getAttributes("image") : null;
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
@@ -271,9 +349,36 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
             active={editor?.isActive("highlight")}
             disabled={!editor}
             label={messages.editor.highlight}
-            onClick={() => editor?.chain().focus().toggleHighlight().run()}
+            onClick={() => setHighlightColor(highlightColorOptions[0].value)}
           >
             <Highlighter aria-hidden="true" className="h-4 w-4" />
+          </ToolbarButton>
+          {textColorOptions.map((colorOption) => (
+            <ColorSwatchButton
+              active={editor?.isActive("textStyle", { color: colorOption.value })}
+              color={colorOption.value}
+              disabled={!editor}
+              key={colorOption.value}
+              label={colorOption.label}
+              onClick={() => setTextColor(colorOption.value)}
+            />
+          ))}
+          <ToolbarButton disabled={!editor} label={messages.editor.clearTextColor} onClick={clearTextColor}>
+            <Brush aria-hidden="true" className="h-4 w-4" />
+          </ToolbarButton>
+          {highlightColorOptions.map((colorOption) => (
+            <ColorSwatchButton
+              active={editor?.isActive("highlight", { color: colorOption.value })}
+              color={colorOption.value}
+              disabled={!editor}
+              key={colorOption.value}
+              label={colorOption.label}
+              onClick={() => setHighlightColor(colorOption.value)}
+              variant="highlight"
+            />
+          ))}
+          <ToolbarButton disabled={!editor} label={messages.editor.clearHighlight} onClick={clearHighlightColor}>
+            <X aria-hidden="true" className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton
             active={editor?.isActive("link")}
@@ -301,6 +406,66 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
             ref={imageInputRef}
             type="file"
           />
+          {selectedImageAttributes ? (
+            <>
+              <ToolbarButton
+                active={selectedImageAttributes.width === imageWidthOptions[0].value}
+                disabled={!editor}
+                label={messages.editor.imageSmall}
+                onClick={() => updateSelectedImage({ width: imageWidthOptions[0].value })}
+              >
+                <Minimize2 aria-hidden="true" className="h-3.5 w-3.5" />
+              </ToolbarButton>
+              <ToolbarButton
+                active={selectedImageAttributes.width === imageWidthOptions[1].value}
+                disabled={!editor}
+                label={messages.editor.imageMedium}
+                onClick={() => updateSelectedImage({ width: imageWidthOptions[1].value })}
+              >
+                <ImageIcon aria-hidden="true" className="h-4 w-4" />
+              </ToolbarButton>
+              <ToolbarButton
+                active={selectedImageAttributes.width === imageWidthOptions[2].value}
+                disabled={!editor}
+                label={messages.editor.imageLarge}
+                onClick={() => updateSelectedImage({ width: imageWidthOptions[2].value })}
+              >
+                <ImageIcon aria-hidden="true" className="h-5 w-5" />
+              </ToolbarButton>
+              <ToolbarButton
+                active={selectedImageAttributes.width === imageWidthOptions[3].value}
+                disabled={!editor}
+                label={messages.editor.imageFull}
+                onClick={() => updateSelectedImage({ width: imageWidthOptions[3].value })}
+              >
+                <Maximize2 aria-hidden="true" className="h-4 w-4" />
+              </ToolbarButton>
+              <ToolbarButton
+                active={selectedImageAttributes.align === "left"}
+                disabled={!editor}
+                label={messages.editor.imageAlignLeft}
+                onClick={() => updateSelectedImage({ align: "left" })}
+              >
+                <PanelLeft aria-hidden="true" className="h-4 w-4" />
+              </ToolbarButton>
+              <ToolbarButton
+                active={selectedImageAttributes.align === "center"}
+                disabled={!editor}
+                label={messages.editor.imageAlignCenter}
+                onClick={() => updateSelectedImage({ align: "center" })}
+              >
+                <AlignCenter aria-hidden="true" className="h-4 w-4" />
+              </ToolbarButton>
+              <ToolbarButton
+                active={selectedImageAttributes.align === "right"}
+                disabled={!editor}
+                label={messages.editor.imageAlignRight}
+                onClick={() => updateSelectedImage({ align: "right" })}
+              >
+                <PanelRight aria-hidden="true" className="h-4 w-4" />
+              </ToolbarButton>
+            </>
+          ) : null}
           <ToolbarButton
             active={editor?.isActive({ textAlign: "left" })}
             disabled={!editor}
@@ -445,6 +610,62 @@ function normalizeLinkUrl(rawUrl: string) {
   }
 
   return `https://${trimmedUrl}`;
+}
+
+function sanitizeImageWidth(width: unknown) {
+  return imageWidthOptions.some((option) => option.value === width) ? String(width) : "100%";
+}
+
+function sanitizeImageAlign(align: unknown) {
+  return align === "left" || align === "right" || align === "center" ? align : "center";
+}
+
+function getImageStyle(width: unknown, align: unknown) {
+  const safeWidth = sanitizeImageWidth(width);
+  const safeAlign = sanitizeImageAlign(align);
+  const margin =
+    safeAlign === "left" ? "1.5rem auto 1.5rem 0" : safeAlign === "right" ? "1.5rem 0 1.5rem auto" : "1.5rem auto";
+
+  return `display: block; width: ${safeWidth}; margin: ${margin};`;
+}
+
+function ColorSwatchButton({
+  active,
+  color,
+  disabled,
+  label,
+  onClick,
+  variant = "text"
+}: {
+  active?: boolean;
+  color: string;
+  disabled?: boolean;
+  label: string;
+  onClick: () => void;
+  variant?: "highlight" | "text";
+}) {
+  return (
+    <button
+      aria-label={label}
+      className={cn(
+        "inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent transition-colors hover:bg-background disabled:pointer-events-none disabled:opacity-40",
+        active ? "border-border bg-background shadow-sm" : ""
+      )}
+      disabled={disabled}
+      onClick={onClick}
+      title={label}
+      type="button"
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "h-4 w-4 rounded-full border border-border",
+          variant === "highlight" ? "rounded-sm" : ""
+        )}
+        style={{ backgroundColor: color }}
+      />
+    </button>
+  );
 }
 
 function ToolbarButton({
