@@ -50,7 +50,7 @@ export const messages = {
     faqItems: [
       {
         question: "Can I use Draftly without paying?",
-        answer: "Yes. You can register and manage documents, but editing and saving require an active paid plan."
+        answer: "Yes. You can register and view the upgrade path, but document creation and editing require an active paid plan."
       },
       {
         question: "Does Draftly use external authentication providers?",
@@ -128,6 +128,9 @@ export const messages = {
     title: "Documents",
     subtitle: "Create, rename, delete, and open your documents.",
     newDocument: "New document",
+    newDocumentNameLabel: "New document name",
+    create: "Create",
+    cancel: "Cancel",
     emptyTitle: "No documents yet",
     emptyDescription: "Create your first document to set up the workspace.",
     titleColumn: "Title",
@@ -135,14 +138,20 @@ export const messages = {
     actionsColumn: "Actions",
     renameLabel: "Document title",
     rename: "Rename",
+    saveTitle: "Save title",
     delete: "Delete",
     open: "Open",
+    editDocument: "Edit document",
+    renameDocument: "Rename document",
+    deleteDocument: "Delete document",
+    confirmDelete: "Delete this document? This cannot be undone.",
     untitled: "Untitled Document",
     planFree: "Free",
     planActive: "Paid access active",
     planPastDue: "Payment needs attention",
-    upgradeNotice: "Upgrade to edit and save document content.",
-    upgradeButton: "Upgrade"
+    upgradeNotice: "Upgrade to create, edit, save, rename, and delete documents.",
+    upgradeButton: "Upgrade",
+    createRequiresUpgrade: "Upgrade to create"
   },
   editor: {
     backToDashboard: "Back to dashboard",

@@ -17,7 +17,7 @@ import {
   Strikethrough,
   Undo2
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ type RichTextEditorProps = {
 };
 
 export function RichTextEditor({ documentId, initialContent }: RichTextEditorProps) {
+  const lastSavedContentRef = useRef(JSON.stringify(initialContent));
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const editor = useEditor({
     extensions: [StarterKit],
@@ -41,13 +42,21 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
         class: "prose prose-neutral max-w-none"
       }
     },
-    onUpdate() {
-      setSaveState("dirty");
+    onUpdate({ editor: updatedEditor }) {
+      const currentContent = JSON.stringify(updatedEditor.getJSON());
+      setSaveState(currentContent === lastSavedContentRef.current ? "saved" : "dirty");
     }
   });
 
   async function saveDocument() {
     if (!editor) {
+      return;
+    }
+
+    const currentContent = JSON.stringify(editor.getJSON());
+
+    if (currentContent === lastSavedContentRef.current) {
+      setSaveState("saved");
       return;
     }
 
@@ -68,11 +77,14 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
         throw new Error("Save failed");
       }
 
+      lastSavedContentRef.current = currentContent;
       setSaveState("saved");
     } catch {
       setSaveState("error");
     }
   }
+
+  const canSave = Boolean(editor && (saveState === "dirty" || saveState === "error"));
 
   const statusText =
     saveState === "saving"
@@ -187,7 +199,7 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
           >
             {statusText}
           </span>
-          <Button disabled={!editor || saveState === "saving"} onClick={saveDocument} type="button">
+          <Button disabled={!canSave || saveState === "saving"} onClick={saveDocument} type="button">
             <Save aria-hidden="true" className="h-4 w-4" />
             {saveState === "saving" ? messages.editor.saving : messages.editor.save}
           </Button>

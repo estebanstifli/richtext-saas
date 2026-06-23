@@ -158,6 +158,14 @@ Webhook processing is idempotent by storing processed Stripe event IDs on the `S
 - Editor save API requires both document ownership and active paid access.
 - Stripe webhook signatures are verified with `STRIPE_WEBHOOK_SECRET`.
 
+## Take-Home Write-Up
+
+The app decides a user is an active subscriber through `src/lib/billing.ts`. Lifetime access is valid when `lifetimeAccess` is true or the subscription status is `LIFETIME`; recurring access is valid only when the status is `ACTIVE` and the current period has not expired.
+
+If payment succeeds but the webhook is delayed, the success page calls Stripe directly with the Checkout Session ID and applies the same backend subscription update. This means access is never granted only because the browser reached a success URL, but users are also not blocked unnecessarily while waiting for webhook delivery.
+
+One security decision was to store only a SHA-256 hash of the session token in the database. The raw token lives only in the HttpOnly cookie, so a database leak does not immediately expose usable sessions. Every protected page and API revalidates that token server-side.
+
 ## Tradeoffs
 
 - Sessions are single-device because the session hash is stored directly on `User`.

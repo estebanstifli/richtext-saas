@@ -32,9 +32,19 @@ export function serializeEditorContent(content: unknown) {
   return JSON.stringify(content);
 }
 
-export function normalizeDocumentTitle(title: FormDataEntryValue | null) {
+export function normalizeDocumentTitle(title: FormDataEntryValue | null, fallback: string = messages.dashboard.untitled) {
   const normalized = String(title || "").trim();
-  return normalized || messages.dashboard.untitled;
+  return normalized || fallback;
+}
+
+export function getNextDocumentTitle(documents: Array<{ title: string }>) {
+  const nextNumber =
+    documents.reduce((max, document) => {
+      const match = /^Document(\d+)$/.exec(document.title.trim());
+      return match ? Math.max(max, Number(match[1])) : max;
+    }, 0) + 1;
+
+  return `Document${nextNumber}`;
 }
 
 export function formatDocumentDate(date: Date) {
