@@ -1,6 +1,7 @@
 "use client";
 
 import Highlight from "@tiptap/extension-highlight";
+import ImageExtension from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
@@ -16,10 +17,12 @@ import {
   Code2,
   Heading1,
   Highlighter,
+  Image as ImageIcon,
   Italic,
   Link2,
   List,
   ListOrdered,
+  Loader2,
   Pilcrow,
   Quote,
   Redo2,
@@ -38,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { messages } from "@/messages/en";
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
+type ImageUploadState = "idle" | "uploading" | "error";
 
 type RichTextEditorProps = {
   documentId: string;
@@ -45,7 +49,9 @@ type RichTextEditorProps = {
 };
 
 export function RichTextEditor({ documentId, initialContent }: RichTextEditorProps) {
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const lastSavedContentRef = useRef(JSON.stringify(initialContent));
+  const [imageUploadState, setImageUploadState] = useState<ImageUploadState>("idle");
   const [linkUrl, setLinkUrl] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [showLinkEditor, setShowLinkEditor] = useState(false);
@@ -54,6 +60,12 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
       StarterKit,
       Underline,
       Highlight,
+      ImageExtension.configure({
+        allowBase64: false,
+        HTMLAttributes: {
+          class: "my-6 max-h-[520px] w-full rounded-md border border-border object-contain"
+        }
+      }),
       TextAlign.configure({
         types: ["heading", "paragraph"]
       }),
@@ -153,6 +165,47 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
     setShowLinkEditor(false);
   }
 
+  async function uploadImage(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!editor || !file) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("image", file);
+    setImageUploadState("uploading");
+
+    try {
+      const response = await fetch(`/api/documents/${documentId}/assets`, {
+        method: "POST",
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error("Image upload failed");
+      }
+
+      const body = (await response.json()) as {
+        asset?: {
+          alt?: string;
+          url?: string;
+        };
+      };
+
+      if (!body.asset?.url) {
+        throw new Error("Image upload response is invalid");
+      }
+
+      editor.chain().focus().setImage({ alt: body.asset.alt || "", src: body.asset.url }).run();
+      setImageUploadState("idle");
+    } catch {
+      setImageUploadState("error");
+    } finally {
+      event.target.value = "";
+    }
+  }
+
   const statusText =
     saveState === "saving"
       ? messages.editor.saving
@@ -230,6 +283,24 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
           >
             <Link2 aria-hidden="true" className="h-4 w-4" />
           </ToolbarButton>
+          <ToolbarButton
+            disabled={!editor || imageUploadState === "uploading"}
+            label={messages.editor.image}
+            onClick={() => imageInputRef.current?.click()}
+          >
+            {imageUploadState === "uploading" ? (
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+            ) : (
+              <ImageIcon aria-hidden="true" className="h-4 w-4" />
+            )}
+          </ToolbarButton>
+          <input
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            className="hidden"
+            onChange={uploadImage}
+            ref={imageInputRef}
+            type="file"
+          />
           <ToolbarButton
             active={editor?.isActive({ textAlign: "left" })}
             disabled={!editor}
@@ -332,6 +403,11 @@ export function RichTextEditor({ documentId, initialContent }: RichTextEditorPro
           </form>
         ) : null}
         <div className="flex items-center justify-between gap-3 lg:justify-end">
+          {imageUploadState !== "idle" ? (
+            <span className={cn("text-sm", imageUploadState === "error" ? "text-destructive" : "text-muted-foreground")}>
+              {imageUploadState === "uploading" ? messages.editor.imageUploading : messages.editor.imageUploadFailed}
+            </span>
+          ) : null}
           <span
             className={cn(
               "text-sm",

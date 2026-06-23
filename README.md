@@ -8,7 +8,7 @@ Draftly is a complete MVP SaaS rich text editor built with Next.js 15, TypeScrip
 - Email/password registration and login with `bcryptjs`.
 - Secure HttpOnly cookie sessions validated server-side.
 - Authenticated dashboard for creating, renaming, deleting, and opening documents.
-- TipTap editor gated behind active paid access, with underline, highlight, links, and text alignment.
+- TipTap editor gated behind active paid access, with underline, highlight, links, images, and text alignment.
 - Stripe Checkout for monthly, annual, and lifetime plans.
 - Stripe webhook handling for `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, and `customer.subscription.deleted`.
 - Backend Checkout Session validation on the billing success page.
@@ -101,6 +101,7 @@ The Prisma schema is in `prisma/schema.prisma` and defines:
 - `User`: email, password hash, Stripe customer/subscription IDs, and session token metadata.
 - `Subscription`: paid state, plan, Stripe IDs, processed webhook event IDs, and lifetime access.
 - `Document`: owner-scoped rich text documents with serialized TipTap JSON content.
+- `DocumentAsset`: uploaded image metadata linked to the owning user and document.
 
 Useful commands:
 
@@ -176,6 +177,7 @@ It verifies:
 - session cookie creation
 - non-paying dashboard upgrade path
 - server-side edit gating for non-paying users
+- server-side image upload gating for non-paying users
 - billing portal route protection
 
 To run it against a deployed environment:
@@ -197,7 +199,8 @@ The test creates a disposable user with an `acceptance-...@example.com` email. I
 - Server Components fetch protected data and enforce route-level authorization.
 - Server Actions handle auth and dashboard document mutations.
 - Route Handlers handle Stripe, logout, and document save APIs.
-- TipTap content is stored as serialized JSON in a SQLite text column for simple portability. The editor uses StarterKit plus underline, highlight, link, and text alignment extensions for a richer MVP editing surface.
+- TipTap content is stored as serialized JSON in a SQLite text column for simple portability. The editor uses StarterKit plus underline, highlight, link, image, and text alignment extensions for a richer MVP editing surface.
+- Uploaded editor images are validated server-side, stored under `public/uploads/{userId}/{documentId}`, and tracked in Prisma through `DocumentAsset`.
 - Subscription status is stored as strings instead of Prisma enums for SQLite compatibility.
 - User-facing copy is centralized in `src/messages/en.ts` to prepare for localization.
 - UI primitives are small shadcn-style components instead of a full component registry install.
@@ -210,6 +213,7 @@ The test creates a disposable user with an `acceptance-...@example.com` email. I
 - Protected pages and APIs validate sessions server-side.
 - Document queries are always scoped by `userId`.
 - Editor save API requires both document ownership and active paid access.
+- Image uploads require document ownership and active paid access, allow only JPG, PNG, WebP, or GIF, and reject files larger than 5 MB.
 - Stripe webhook signatures are verified with `STRIPE_WEBHOOK_SECRET`.
 
 ## Take-Home Write-Up
@@ -221,6 +225,7 @@ The required one-page written response is available in [WRITEUP.md](./WRITEUP.md
 - Sessions are single-device because the session hash is stored directly on `User`.
 - There is no CSRF token layer; the MVP relies on `SameSite=Lax` cookies and server-side authorization.
 - TipTap content is stored as JSON text instead of a structured JSON column for SQLite simplicity.
+- Image storage uses the local filesystem for MVP simplicity; object storage such as S3 or R2 would be better for horizontally scaled or serverless production deployments.
 - Billing state is optimized for the three required plans, not for a large plan catalog.
 - Webhook idempotency is stored on `Subscription`; a dedicated `StripeEvent` table would scale better.
 
@@ -232,7 +237,7 @@ The required one-page written response is available in [WRITEUP.md](./WRITEUP.md
 - No admin panel.
 - No team accounts.
 - No realtime collaboration.
-- No billing portal for self-service cancellation.
+- No cloud object storage for uploaded images.
 - The automated smoke test does not complete card entry in Stripe Checkout.
 
 ## Verification

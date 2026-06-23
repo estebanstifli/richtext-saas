@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/auth";
 import { hasPaidAccess } from "@/lib/billing";
 import { DEFAULT_EDITOR_CONTENT, getNextDocumentTitle, normalizeDocumentTitle } from "@/lib/documents";
 import { prisma } from "@/lib/prisma";
+import { removeDocumentUploadDirectory } from "@/lib/uploads";
 
 export async function createDocumentAction(formData?: FormData) {
   const user = await requireUser();
@@ -90,12 +91,16 @@ export async function deleteDocumentAction(formData: FormData) {
     return;
   }
 
-  await prisma.document.deleteMany({
+  const result = await prisma.document.deleteMany({
     where: {
       id: documentId,
       userId: user.id
     }
   });
+
+  if (result.count > 0) {
+    await removeDocumentUploadDirectory(user.id, documentId);
+  }
 
   revalidatePath("/app/dashboard");
 }

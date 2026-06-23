@@ -92,6 +92,18 @@ await runStep("non-paying user cannot open or save documents", async () => {
   assert(saveResponse.status === 403, `Expected save to be forbidden for non-paying user, got ${saveResponse.status}`);
 });
 
+await runStep("non-paying user cannot upload document images", async () => {
+  const form = new FormData();
+  form.set("image", new Blob(["not-an-image"], { type: "image/png" }), "blocked.png");
+
+  const response = await request("/api/documents/not-a-real-document/assets", {
+    method: "POST",
+    body: form
+  });
+
+  assert(response.status === 403, `Expected image upload to be forbidden for non-paying user, got ${response.status}`);
+});
+
 await runStep("billing portal is protected and requires a Stripe customer", async () => {
   const response = await request("/api/billing/portal", {
     method: "POST",
