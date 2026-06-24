@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LockKeyhole } from "lucide-react";
 
+import { DocumentTitleEditor } from "@/components/documents/document-title-editor";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import { AppHeader } from "@/components/layout/app-header";
 import { buttonVariants } from "@/components/ui/button";
@@ -43,15 +43,7 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
             <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href="/app/dashboard">
               {messages.editor.backToDashboard}
             </Link>
-            <div className="mt-3 flex items-center gap-3">
-              <h1 className="truncate text-3xl font-bold tracking-normal">{document.title}</h1>
-              {!canEdit ? (
-                <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                  <LockKeyhole aria-hidden="true" className="h-3.5 w-3.5" />
-                  {messages.editor.readOnlyBadge}
-                </span>
-              ) : null}
-            </div>
+            <DocumentTitleEditor canEdit={canEdit} documentId={document.id} title={document.title} />
           </div>
         </div>
         {!canEdit ? (

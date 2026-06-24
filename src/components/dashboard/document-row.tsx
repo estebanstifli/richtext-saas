@@ -23,10 +23,10 @@ export function DocumentRow({ canManage, document }: DocumentRowProps) {
   const [isRenaming, setIsRenaming] = useState(false);
 
   return (
-    <div className="grid gap-4 px-4 py-4 md:grid-cols-[1fr_180px_170px] md:items-center" key={document.id}>
+    <div className="grid gap-4 px-4 py-4 md:grid-cols-[1fr_180px_120px] md:items-center" key={document.id}>
       <div className="min-w-0">
         {isRenaming ? (
-          <form action={renameDocumentAction} className="flex gap-2">
+          <form action={renameDocumentAction} className="flex gap-2" onSubmit={() => setIsRenaming(false)}>
             <input name="documentId" type="hidden" value={document.id} />
             <Input
               aria-label={messages.dashboard.renameLabel}
@@ -90,35 +90,24 @@ export function DocumentRow({ canManage, document }: DocumentRowProps) {
           )}
         </Link>
         {canManage ? (
-          <>
+          <form
+            action={deleteDocumentAction}
+            onSubmit={(event) => {
+              if (!window.confirm(messages.dashboard.confirmDelete)) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <input name="documentId" type="hidden" value={document.id} />
             <button
-              aria-label={messages.dashboard.renameDocument}
-              className={cn(buttonVariants({ variant: "outline", size: "icon" }), "h-9 w-9")}
-              onClick={() => setIsRenaming(true)}
-              title={messages.dashboard.renameDocument}
-              type="button"
+              aria-label={messages.dashboard.deleteDocument}
+              className={cn(buttonVariants({ variant: "destructive", size: "icon" }), "h-9 w-9")}
+              title={messages.dashboard.deleteDocument}
+              type="submit"
             >
-              <Pencil aria-hidden="true" className="h-4 w-4" />
+              <Trash2 aria-hidden="true" className="h-4 w-4" />
             </button>
-            <form
-              action={deleteDocumentAction}
-              onSubmit={(event) => {
-                if (!window.confirm(messages.dashboard.confirmDelete)) {
-                  event.preventDefault();
-                }
-              }}
-            >
-              <input name="documentId" type="hidden" value={document.id} />
-              <button
-                aria-label={messages.dashboard.deleteDocument}
-                className={cn(buttonVariants({ variant: "destructive", size: "icon" }), "h-9 w-9")}
-                title={messages.dashboard.deleteDocument}
-                type="submit"
-              >
-                <Trash2 aria-hidden="true" className="h-4 w-4" />
-              </button>
-            </form>
-          </>
+          </form>
         ) : null}
       </div>
     </div>

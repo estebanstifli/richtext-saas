@@ -7,6 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
+    "setup": "npm install && npx prisma generate && npx prisma db push",
+    "start:all": "npm run setup && npm run build && npm run start",
     "test:acceptance": "node scripts/acceptance-smoke.mjs",
     "stripe:status": "node scripts/stripe-status-by-email.mjs",
     "prisma:generate": "prisma generate",

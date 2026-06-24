@@ -113,7 +113,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </div>
         ) : (
           <div className="divide-y divide-border">
-            <div className="hidden grid-cols-[1fr_180px_170px] gap-4 bg-muted/60 px-4 py-3 text-sm font-medium text-muted-foreground md:grid">
+            <div className="hidden grid-cols-[1fr_180px_120px] gap-4 bg-muted/60 px-4 py-3 text-sm font-medium text-muted-foreground md:grid">
               <span>{messages.dashboard.titleColumn}</span>
               <span>{messages.dashboard.modifiedColumn}</span>
               <span className="text-right">{messages.dashboard.actionsColumn}</span>

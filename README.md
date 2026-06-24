@@ -29,7 +29,31 @@ Draftly is a complete MVP SaaS rich text editor built with Next.js 15, TypeScrip
 - bcryptjs
 - HttpOnly cookie sessions
 
+## Deployment Notes
+
+Deployment was not required for this assignment, but I deployed the application to a public VPS in order to validate the complete Stripe integration in a production-like environment.
+
+This allowed testing:
+
+- Stripe Checkout sessions
+- Webhook delivery and signature verification
+- Billing Portal integration
+- Subscription reconciliation logic
+- HTTPS configuration
+- Reverse proxy setup
+- Environment variable configuration
+
+The application can still be run entirely in local development as described below.
+
 ## Setup
+
+For the shortest local setup, copy `.env.example` to `.env`, fill the required Stripe values, then run:
+
+```bash
+npm run start:all
+```
+
+This installs dependencies, generates Prisma Client, pushes the SQLite schema, builds the app, and starts the production server. For development mode, use the step-by-step flow below.
 
 Install dependencies:
 
@@ -39,11 +63,7 @@ npm install
 
 Create your environment file:
 
-```bash
-cp .env.example .env
-```
-
-Update `.env` with your real Stripe values.
+Copy `.env.example` to `.env` and fill the required values. On macOS/Linux you can use `cp .env.example .env`; on Windows, copy the file from Explorer or run `Copy-Item .env.example .env` in PowerShell.
 
 Generate Prisma Client:
 

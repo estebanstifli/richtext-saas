@@ -145,6 +145,15 @@ if (runStripeCheckout) {
   logSkip("Stripe Checkout session creation", "set TEST_STRIPE_CHECKOUT=true to enable it");
 }
 
+await runStep("user can log out back to the current site", async () => {
+  const response = await request("/api/auth/logout", {
+    method: "POST",
+    redirect: "manual"
+  });
+
+  assertRedirect(response, "/");
+});
+
 console.log(`\nAcceptance smoke passed against ${baseUrl}`);
 console.log(`Created test user: ${createdEmail}`);
 
