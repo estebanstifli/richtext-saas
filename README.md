@@ -2,6 +2,11 @@
 
 Draftly is a complete MVP SaaS rich text editor built with Next.js 15, TypeScript, Prisma, SQLite, Stripe Checkout, cookie-based authentication, and TipTap.
 
+## Quick Links
+
+- Video Demo: https://youtu.be/GZo4qd-iKMM
+- Live Demo: https://nodetest.andromedanova.com
+
 ## Features
 
 - Responsive public landing page with hero, features, pricing, FAQ, and calls to action.
