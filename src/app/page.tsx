@@ -23,6 +23,7 @@ export default function LandingPage() {
                 </span>
                 <h1 className="text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
                   {messages.landing.heroTitleTop}
+                  Hola
                   <br />
                   <span className="text-primary">{messages.landing.heroTitleAccent}</span>
                 </h1>
