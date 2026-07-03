@@ -1,5 +1,8 @@
 "use client";
 
+// Editor inline del titulo del documento.
+// Si canEdit=false, muestra modo solo lectura con badge.
+
 import { Check, LockKeyhole, Pencil, X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 
@@ -15,14 +18,17 @@ type DocumentTitleEditorProps = {
   title: string;
 };
 
+// Componente principal: alterna entre vista normal y mini-form de renombrado.
 export function DocumentTitleEditor({ canEdit, documentId, title }: DocumentTitleEditorProps) {
   const [currentTitle, setCurrentTitle] = useState(title);
   const [isRenaming, setIsRenaming] = useState(false);
 
+  // Si cambia el titulo desde servidor, sincronizamos estado local.
   useEffect(() => {
     setCurrentTitle(title);
   }, [title]);
 
+  // UX optimista basica para reflejar titulo nuevo al enviar.
   function handleRenameSubmit(event: FormEvent<HTMLFormElement>) {
     const formData = new FormData(event.currentTarget);
     const nextTitle = String(formData.get("title") || "").trim();
@@ -34,6 +40,7 @@ export function DocumentTitleEditor({ canEdit, documentId, title }: DocumentTitl
     setIsRenaming(false);
   }
 
+  // Modo edicion: input + botones guardar/cancelar.
   if (canEdit && isRenaming) {
     return (
       <form action={renameDocumentAction} className="mt-3 flex max-w-2xl gap-2" onSubmit={handleRenameSubmit}>
@@ -64,6 +71,7 @@ export function DocumentTitleEditor({ canEdit, documentId, title }: DocumentTitl
     );
   }
 
+  // Modo normal: titulo + icono lapiz (o badge readOnly si no puede editar).
   return (
     <div className="group/title mt-3 flex min-w-0 items-center gap-3">
       <h1 className="min-w-0 truncate text-3xl font-bold tracking-normal">{currentTitle}</h1>

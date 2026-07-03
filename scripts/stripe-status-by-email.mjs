@@ -1,6 +1,9 @@
 import fs from "node:fs";
 import Stripe from "stripe";
 
+// Script de diagnostico rapido de Stripe por email.
+// Idea: ver si un usuario "parece" con acceso pago mirando customers/subscriptions/sessions.
+
 loadDotEnv();
 
 const email = process.argv[2]?.trim().toLowerCase();
@@ -26,6 +29,7 @@ if (customers.length === 0) {
 const reports = [];
 
 for (const customer of customers) {
+  // Consultamos en paralelo subscripciones y checkout sessions recientes.
   const [subscriptions, checkoutSessions] = await Promise.all([
     stripe.subscriptions.list({
       customer: customer.id,
@@ -74,6 +78,7 @@ console.log(JSON.stringify({ email, found: true, reports }, null, 2));
 
 async function findCustomersByEmail(customerEmail) {
   try {
+    // Preferimos search (mas flexible), y si falla hacemos fallback a list por email.
     const result = await stripe.customers.search({
       query: `email:'${escapeStripeSearchValue(customerEmail)}'`,
       limit: 10
@@ -110,6 +115,7 @@ function buildSubscriptionReport(subscription) {
 }
 
 async function buildCheckoutSessionReport(session) {
+  // Sacamos line items para mapear precio -> plan y cruzarlo con metadata.
   const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
   const priceIds = lineItems.data.map((item) => item.price?.id).filter(Boolean);
   const matchedPlans = unique([
@@ -132,6 +138,7 @@ async function buildCheckoutSessionReport(session) {
 }
 
 function buildPlanMap() {
+  // Mapa priceId => plan usando tus envs actuales.
   return new Map(
     [
       [process.env.STRIPE_MONTHLY_PRICE_ID, "monthly"],
@@ -154,6 +161,7 @@ function escapeStripeSearchValue(value) {
 }
 
 function loadDotEnv() {
+  // Loader minimalista de .env para poder ejecutar script sin dependencias extra.
   if (!fs.existsSync(".env")) {
     return;
   }

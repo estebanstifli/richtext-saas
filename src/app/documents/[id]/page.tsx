@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+// Pagina del editor de un documento concreto.
+// Aqui resolvemos auth, ownership del doc y si entra en modo editable o solo lectura.
+
 import { DocumentTitleEditor } from "@/components/documents/document-title-editor";
 import { RichTextEditor } from "@/components/editor/rich-text-editor";
 import { AppHeader } from "@/components/layout/app-header";
@@ -17,12 +20,15 @@ type DocumentPageProps = {
   }>;
 };
 
+// Flujo: requireUser -> cargar doc por id+userId -> render editor con gating de paid access.
 export default async function DocumentPage({ params }: DocumentPageProps) {
   const user = await requireUser();
   // Non-subscribers keep read access to their own documents; editing is gated below and on every write API.
   const canEdit = hasPaidAccess(user.subscription);
 
   const { id } = await params;
+
+  // Ownership check fuerte: si no coincide userId, este doc "no existe" para ese usuario.
   const document = await prisma.document.findFirst({
     where: {
       id,
@@ -47,6 +53,7 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
           </div>
         </div>
         {!canEdit ? (
+          // Banner de solo lectura cuando no hay plan activo.
           <div className="mb-6 flex flex-col gap-3 rounded-lg border border-border bg-background p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
               <p className="text-sm font-semibold">{messages.editor.readOnlyTitle}</p>
@@ -57,6 +64,7 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
             </Link>
           </div>
         ) : null}
+        {/* Parseamos JSON de DB para que TipTap reciba objeto valido. */}
         <RichTextEditor documentId={document.id} editable={canEdit} initialContent={parseEditorContent(document.content)} />
       </main>
     </div>

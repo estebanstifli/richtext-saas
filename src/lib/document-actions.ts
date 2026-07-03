@@ -1,5 +1,8 @@
 "use server";
 
+// Server actions de documentos: crear, renombrar, borrar.
+// Siempre pasan por auth + reglas de plan de pago + ownership del documento.
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -9,12 +12,16 @@ import { DEFAULT_EDITOR_CONTENT, getNextDocumentTitle, normalizeDocumentTitle } 
 import { prisma } from "@/lib/prisma";
 import { removeDocumentUploadDirectory } from "@/lib/uploads";
 
+// Crea documento nuevo para el usuario actual y manda al editor.
 export async function createDocumentAction(formData?: FormData) {
   const user = await requireUser();
+
+  // Gating de negocio: sin plan activo, a upgrade.
   if (!hasPaidAccess(user.subscription)) {
     redirect("/upgrade");
   }
 
+  // Leemos titulos existentes para sugerir el siguiente DocumentN.
   const existingDocuments = await prisma.document.findMany({
     where: {
       userId: user.id
@@ -25,6 +32,8 @@ export async function createDocumentAction(formData?: FormData) {
   });
   const fallbackTitle = getNextDocumentTitle(existingDocuments);
   const title = normalizeDocumentTitle(formData?.get("title") ?? null, fallbackTitle);
+
+  // Guardamos contenido minimo para que TipTap abra con estructura valida.
   const document = await prisma.document.create({
     data: {
       userId: user.id,
@@ -37,6 +46,7 @@ export async function createDocumentAction(formData?: FormData) {
   redirect(`/documents/${document.id}`);
 }
 
+// Renombra un documento del usuario (si existe y le pertenece).
 export async function renameDocumentAction(formData: FormData) {
   const user = await requireUser();
   if (!hasPaidAccess(user.subscription)) {
@@ -45,10 +55,12 @@ export async function renameDocumentAction(formData: FormData) {
 
   const documentId = String(formData.get("documentId") || "");
 
+  // Si viene mal el form, salimos en silencio.
   if (!documentId) {
     return;
   }
 
+  // Defensa de ownership: buscamos por id + userId.
   const existingDocument = await prisma.document.findFirst({
     where: {
       id: documentId,
@@ -62,6 +74,7 @@ export async function renameDocumentAction(formData: FormData) {
 
   const title = normalizeDocumentTitle(formData.get("title"), existingDocument.title);
 
+  // Si no cambia nada, no hacemos update inutil.
   if (title === existingDocument.title) {
     return;
   }
@@ -79,6 +92,7 @@ export async function renameDocumentAction(formData: FormData) {
   revalidatePath(`/documents/${documentId}`);
 }
 
+// Borra documento del usuario y limpia carpeta de uploads asociada.
 export async function deleteDocumentAction(formData: FormData) {
   const user = await requireUser();
   if (!hasPaidAccess(user.subscription)) {
@@ -91,6 +105,7 @@ export async function deleteDocumentAction(formData: FormData) {
     return;
   }
 
+  // deleteMany evita error si no existe o no pertenece al user.
   const result = await prisma.document.deleteMany({
     where: {
       id: documentId,
@@ -99,6 +114,7 @@ export async function deleteDocumentAction(formData: FormData) {
   });
 
   if (result.count > 0) {
+    // Limpiamos archivos fisicos solo si realmente se borro en DB.
     await removeDocumentUploadDirectory(user.id, documentId);
   }
 

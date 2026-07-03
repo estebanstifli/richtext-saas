@@ -10,6 +10,8 @@ import { deleteDocumentAction, renameDocumentAction } from "@/lib/document-actio
 import { cn } from "@/lib/utils";
 import { messages } from "@/messages/en";
 
+// Fila individual del listado de documentos.
+// Soporta modo lectura y modo gestion (rename/delete).
 type DocumentRowProps = {
   canManage: boolean;
   document: {
@@ -26,6 +28,7 @@ export function DocumentRow({ canManage, document }: DocumentRowProps) {
     <div className="grid gap-4 px-4 py-4 md:grid-cols-[1fr_180px_120px] md:items-center" key={document.id}>
       <div className="min-w-0">
         {isRenaming ? (
+          // Form server action para renombrar in-place.
           <form action={renameDocumentAction} className="flex gap-2" onSubmit={() => setIsRenaming(false)}>
             <input name="documentId" type="hidden" value={document.id} />
             <Input
@@ -52,6 +55,7 @@ export function DocumentRow({ canManage, document }: DocumentRowProps) {
             </button>
           </form>
         ) : (
+          // Vista normal: titulo + boton editar nombre al hover.
           <div className="group/title flex min-w-0 items-center gap-2">
             <Link
               className="block truncate font-medium text-foreground hover:text-primary"
@@ -90,6 +94,7 @@ export function DocumentRow({ canManage, document }: DocumentRowProps) {
           )}
         </Link>
         {canManage ? (
+          // Delete con confirm browser nativo para evitar borrados accidentales.
           <form
             action={deleteDocumentAction}
             onSubmit={(event) => {

@@ -1,3 +1,6 @@
+// Logger mini de proyecto.
+// Centraliza formato de logs y control de nivel por variables de entorno.
+
 type LogLevel = "debug" | "info" | "error";
 
 const levelRank: Record<LogLevel, number> = {
@@ -6,10 +9,12 @@ const levelRank: Record<LogLevel, number> = {
   error: 30
 };
 
+// Permite apagar logs con LOGGING_ENABLED=false.
 function isEnabled() {
   return process.env.LOGGING_ENABLED !== "false";
 }
 
+// Nivel activo: si no viene por env, en prod usamos info, en dev debug.
 function configuredLevel(): LogLevel {
   const value = process.env.LOG_LEVEL;
 
@@ -20,10 +25,12 @@ function configuredLevel(): LogLevel {
   return process.env.NODE_ENV === "production" ? "info" : "debug";
 }
 
+// Filtra por severidad segun nivel configurado.
 function shouldLog(level: LogLevel) {
   return isEnabled() && levelRank[level] >= levelRank[configuredLevel()];
 }
 
+// Writer base: construye prefijo y manda a console segun nivel.
 function write(level: LogLevel, message: string, meta?: unknown) {
   if (!shouldLog(level)) {
     return;
@@ -45,6 +52,7 @@ function write(level: LogLevel, message: string, meta?: unknown) {
   console.info(prefix, payload);
 }
 
+// API publica del logger para usar desde rutas/libs.
 export const logger = {
   debug(message: string, meta?: unknown) {
     write("debug", message, meta);

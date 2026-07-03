@@ -1,13 +1,18 @@
 import "server-only";
 
+// Config y helpers de Stripe centralizados.
+// Si hace falta cliente Stripe o resolver plan/precio, se hace aqui.
+
 import Stripe from "stripe";
 
 import { type BillingPlan, normalizePlan } from "@/lib/billing";
 import { BillingError } from "@/lib/errors";
 import { messages } from "@/messages/en";
 
+// Singleton para no recrear cliente en cada llamada.
 let stripeClient: Stripe | null = null;
 
+// Devuelve cliente Stripe listo; si falta key, lanza error controlado.
 export function getStripe() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -26,10 +31,12 @@ export function getStripe() {
   return stripeClient;
 }
 
+// URL base de la app (local por defecto para desarrollo).
 export function getAppUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 }
 
+// Convierte plan elegido en datos de checkout (modo + priceId).
 export function getCheckoutPlan(rawPlan: unknown): {
   plan: BillingPlan;
   mode: "payment" | "subscription";
@@ -44,6 +51,7 @@ export function getCheckoutPlan(rawPlan: unknown): {
         : process.env.STRIPE_LIFETIME_PRICE_ID;
 
   if (!priceId) {
+    // Si no hay priceId en env, mejor fallar explicito.
     throw new BillingError(messages.errors.planNotConfigured, 500);
   }
 
@@ -54,6 +62,7 @@ export function getCheckoutPlan(rawPlan: unknown): {
   };
 }
 
+// Mapea priceId Stripe -> plan interno (para webhooks/reconciliacion).
 export function planFromPriceId(priceId: string | null | undefined): BillingPlan | null {
   if (!priceId) {
     return null;

@@ -1,3 +1,6 @@
+// Smoke test black-box de punta a punta.
+// Valida rutas clave (landing/auth/gating/billing) contra local o remoto.
+
 const baseUrl = normalizeBaseUrl(
   process.env.TEST_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 );
@@ -6,6 +9,7 @@ const allowLiveStripe = process.env.TEST_ALLOW_LIVE_STRIPE === "true";
 
 const planNames = ["monthly", "annual", "lifetime"];
 
+// Cookie jar muy simple para simular sesion entre requests.
 class CookieJar {
   cookies = new Map();
 
@@ -35,6 +39,7 @@ class CookieJar {
 const jar = new CookieJar();
 const createdEmail = `acceptance-${Date.now()}@example.com`;
 
+// 1) Landing renderiza mensajes de producto/precio.
 await runStep("landing page communicates product and pricing", async () => {
   const html = await fetchText("/");
 
@@ -47,11 +52,13 @@ await runStep("landing page communicates product and pricing", async () => {
   assertIncludes(html, "199");
 });
 
+// 2) Acceso anonimo a dashboard debe redirigir a login.
 await runStep("anonymous user is redirected away from dashboard", async () => {
   const response = await request("/app/dashboard", { redirect: "manual" }, false);
   assertRedirect(response, "/login");
 });
 
+// 3) Registro crea usuario y sesion.
 await runStep("user can register with email and password", async () => {
   const response = await submitServerAction("/register", {
     email: createdEmail,
@@ -64,6 +71,7 @@ await runStep("user can register with email and password", async () => {
   assert(jar.header().includes("rtext_session="), "Expected registration to set session cookie");
 });
 
+// 4) Usuario free ve CTA de upgrade y resumen de plan/estado.
 await runStep("non-paying user sees upgrade path on dashboard", async () => {
   const html = await fetchText("/app/dashboard");
 
@@ -75,6 +83,7 @@ await runStep("non-paying user sees upgrade path on dashboard", async () => {
   assertIncludes(html, "you can read your documents but not edit them");
 });
 
+// 5) Usuario free no puede guardar contenido (PATCH bloqueado).
 await runStep("non-paying user gets read-only access and cannot save documents", async () => {
   // Missing document returns 404 (no longer redirected to upgrade): read access is allowed, write is not.
   const documentPage = await request("/documents/not-a-real-document", { redirect: "manual" });
@@ -99,6 +108,7 @@ await runStep("non-paying user gets read-only access and cannot save documents",
   assert(saveResponse.status === 403, `Expected save to be forbidden for non-paying user, got ${saveResponse.status}`);
 });
 
+// 6) Usuario free no puede subir imagenes.
 await runStep("non-paying user cannot upload document images", async () => {
   const form = new FormData();
   form.set("image", new Blob(["not-an-image"], { type: "image/png" }), "blocked.png");
@@ -111,6 +121,7 @@ await runStep("non-paying user cannot upload document images", async () => {
   assert(response.status === 403, `Expected image upload to be forbidden for non-paying user, got ${response.status}`);
 });
 
+// 7) Portal de billing requiere customer Stripe.
 await runStep("billing portal is protected and requires a Stripe customer", async () => {
   const response = await request("/api/billing/portal", {
     method: "POST",
@@ -121,6 +132,7 @@ await runStep("billing portal is protected and requires a Stripe customer", asyn
 });
 
 if (runStripeCheckout) {
+  // 8) (Opcional) comprobar que checkout crea sesiones Stripe para todos los planes.
   await runStep("Stripe Checkout sessions are created in test mode for every plan", async () => {
     for (const plan of planNames) {
       const form = new FormData();
@@ -145,6 +157,7 @@ if (runStripeCheckout) {
   logSkip("Stripe Checkout session creation", "set TEST_STRIPE_CHECKOUT=true to enable it");
 }
 
+// 9) Logout invalida sesion y redirige.
 await runStep("user can log out back to the current site", async () => {
   const response = await request("/api/auth/logout", {
     method: "POST",
@@ -157,6 +170,7 @@ await runStep("user can log out back to the current site", async () => {
 console.log(`\nAcceptance smoke passed against ${baseUrl}`);
 console.log(`Created test user: ${createdEmail}`);
 
+// Simula submit de form server action reutilizando hidden inputs de Next.
 async function submitServerAction(path, fields) {
   const html = await fetchText(path);
   const hiddenFields = extractHiddenFields(html);

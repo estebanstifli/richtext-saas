@@ -3,6 +3,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+// Sistema de variantes para botones del proyecto.
+// Evita repetir clases y mantiene consistencia visual.
 export const buttonVariants = cva(
   "inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50",
   {
@@ -31,6 +33,7 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {}
 
+// Wrapper tipado que aplica variantes + className extra.
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, ...props }, ref) => {
     return <button className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;

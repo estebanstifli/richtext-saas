@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { PenLine } from "lucide-react";
 
+// Header publico de landing/auth.
+// Muestra nav marketing y cambia botones segun haya sesion o no.
+
 import { buttonVariants } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth";
 import { messages } from "@/messages/en";
 
+// Componente server que lee usuario actual para pintar CTA correcta.
 export async function SiteHeader() {
   const user = await getCurrentUser();
 
@@ -30,10 +34,12 @@ export async function SiteHeader() {
         </nav>
         <div className="flex items-center gap-2">
           {user ? (
+            // Si ya esta logueado, acceso directo a dashboard.
             <Link className={buttonVariants({ variant: "outline", size: "sm" })} href="/app/dashboard">
               {messages.nav.dashboard}
             </Link>
           ) : (
+            // Si no hay sesion, mostramos login/register.
             <>
               <Link className={buttonVariants({ variant: "ghost", size: "sm" })} href="/login">
                 {messages.nav.login}

@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
 
+// Pagina de upgrade para usuarios autenticados.
+// Desde aqui se lanza checkout y se muestra estado de error si Stripe falla.
+
 import { AppHeader } from "@/components/layout/app-header";
 import { PricingCards } from "@/components/pricing/pricing-cards";
 import { Badge } from "@/components/ui/badge";
@@ -14,12 +17,14 @@ type UpgradePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+// Flujo: requireUser -> reconciliar estado Stripe si hace falta -> render pricing en modo checkout.
 export default async function UpgradePage({ searchParams }: UpgradePageProps) {
   let user = await requireUser();
   const params = await searchParams;
   const selectedPlan = typeof params.plan === "string" ? params.plan : undefined;
   const error = params.error === "checkout";
 
+  // Si aparece como free pero tiene customer Stripe, intentamos rescatar el ultimo checkout completado.
   if (!hasPaidAccess(user.subscription) && user.stripeCustomerId) {
     try {
       const synced = await syncLatestCheckoutSessionForUser(user.id, user.stripeCustomerId);
@@ -36,6 +41,7 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
     }
   }
 
+  // Si ya tiene acceso activo y no viene plan concreto, no tiene sentido quedarse en upgrade.
   if (hasPaidAccess(user.subscription) && !selectedPlan) {
     redirect("/app/dashboard");
   }
@@ -52,6 +58,7 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
           </div>
         </div>
         {error ? (
+          // Banner simple para avisar si /api/billing/checkout devolvio error.
           <div className="mb-6 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
             {messages.upgrade.checkoutError}
           </div>

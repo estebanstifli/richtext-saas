@@ -2,6 +2,9 @@ import type { Subscription, User } from "@prisma/client";
 import { CreditCard } from "lucide-react";
 import Link from "next/link";
 
+// Header del area privada (/app/*).
+// Muestra estado del plan y accesos rapidos (billing, upgrade, logout).
+
 import { Button, buttonVariants } from "@/components/ui/button";
 import { getSubscriptionState } from "@/lib/billing";
 import { cn } from "@/lib/utils";
@@ -13,6 +16,7 @@ type AppHeaderProps = {
   };
 };
 
+// Traduce estado simplificado a etiqueta visible en la pill del header.
 function planLabel(state: ReturnType<typeof getSubscriptionState>) {
   if (state === "active") {
     return messages.dashboard.planActive;
@@ -25,6 +29,7 @@ function planLabel(state: ReturnType<typeof getSubscriptionState>) {
   return messages.dashboard.planFree;
 }
 
+// Componente principal del header autenticado.
 export function AppHeader({ user }: AppHeaderProps) {
   const state = getSubscriptionState(user.subscription);
 
@@ -46,6 +51,7 @@ export function AppHeader({ user }: AppHeaderProps) {
         </div>
         <div className="flex items-center gap-2">
           {user.stripeCustomerId ? (
+            // Boton que abre Stripe Customer Portal via POST.
             <form action="/api/billing/portal" method="POST">
               <Button size="sm" title={messages.nav.billing} type="submit" variant="outline">
                 <CreditCard className="h-4 w-4" aria-hidden="true" />
@@ -54,10 +60,12 @@ export function AppHeader({ user }: AppHeaderProps) {
             </form>
           ) : null}
           {state !== "active" ? (
+            // Si no hay acceso activo, mostramos CTA de upgrade.
             <Link className={buttonVariants({ variant: "outline", size: "sm" })} href="/upgrade">
               {messages.nav.upgrade}
             </Link>
           ) : null}
+          {/* Logout por POST para limpiar sesion server-side. */}
           <form action="/api/auth/logout" method="POST">
             <Button size="sm" type="submit" variant="ghost">
               {messages.nav.logout}

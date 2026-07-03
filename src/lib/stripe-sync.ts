@@ -1,5 +1,8 @@
 import "server-only";
 
+// Cerebro de reconciliacion Stripe <-> estado local.
+// Este fichero transforma eventos/sesiones de Stripe en datos consistentes en Subscription.
+
 import type { Prisma, Subscription } from "@prisma/client";
 import Stripe from "stripe";
 
@@ -14,6 +17,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { getStripe, planFromPriceId } from "@/lib/stripe";
 
+// Guardamos solo los ultimos N eventos para idempotencia y no crecer infinito.
 const MAX_PROCESSED_EVENTS = 50;
 
 type BillingStateInput = {
@@ -29,6 +33,7 @@ type BillingStateInput = {
   eventId?: string;
 };
 
+// Normaliza ids de Stripe que a veces vienen como string y otras como objeto expandido.
 function stripeId(value: unknown): string | null {
   if (!value) {
     return null;
@@ -45,6 +50,7 @@ function stripeId(value: unknown): string | null {
   return null;
 }
 
+// Lee la lista de eventos procesados guardada en DB (JSON string).
 function parseProcessedEvents(subscription: Subscription | null | undefined) {
   if (!subscription?.processedStripeEvents) {
     return [];
@@ -58,6 +64,7 @@ function parseProcessedEvents(subscription: Subscription | null | undefined) {
   }
 }
 
+// Mete un eventId nuevo respetando limite MAX_PROCESSED_EVENTS.
 function appendProcessedEvent(subscription: Subscription | null | undefined, eventId?: string) {
   const events = parseProcessedEvents(subscription);
 
@@ -68,14 +75,17 @@ function appendProcessedEvent(subscription: Subscription | null | undefined, eve
   return JSON.stringify([...events, eventId].slice(-MAX_PROCESSED_EVENTS));
 }
 
+// Consulta rapida para saber si un webhook ya se aplico antes.
 function wasProcessed(subscription: Subscription | null | undefined, eventId?: string) {
   return Boolean(eventId && parseProcessedEvents(subscription).includes(eventId));
 }
 
+// Stripe envia timestamps en segundos unix, aqui los pasamos a Date.
 function dateFromStripeTimestamp(timestamp: unknown) {
   return typeof timestamp === "number" ? new Date(timestamp * 1000) : null;
 }
 
+// Recupera una subscription de Stripe cuando no viene expandida en el payload.
 async function retrieveStripeSubscription(subscriptionId: string | null) {
   if (!subscriptionId) {
     return null;
@@ -89,10 +99,13 @@ async function retrieveStripeSubscription(subscriptionId: string | null) {
   }
 }
 
+// Extrae current_period_end de la subscription de Stripe.
 function currentPeriodEndFromSubscription(subscription: Stripe.Subscription | null) {
   return dateFromStripeTimestamp((subscription as unknown as { current_period_end?: number })?.current_period_end);
 }
 
+// Busca al usuario local a partir de customerId/subscriptionId de Stripe.
+// Primero intenta por User, luego por Subscription para cubrir datos parciales.
 async function findUserForStripe(customerId: string | null, subscriptionId: string | null) {
   const directUserFilters: Prisma.UserWhereInput[] = [];
   const subscriptionFilters: Prisma.SubscriptionWhereInput[] = [];
@@ -138,11 +151,14 @@ async function findUserForStripe(customerId: string | null, subscriptionId: stri
   return null;
 }
 
+// Punto central: aplica un estado de billing en DB de forma idempotente.
+// Actualiza User (ids Stripe) y upsert de Subscription en transaccion.
 async function applyBillingState(input: BillingStateInput) {
   const existing = await prisma.subscription.findUnique({
     where: { userId: input.userId }
   });
 
+  // Si ese webhook ya se proceso, salimos sin tocar nada.
   if (wasProcessed(existing, input.eventId)) {
     logger.info("Skipping already processed Stripe event", { eventId: input.eventId });
     return;
@@ -199,6 +215,7 @@ async function applyBillingState(input: BillingStateInput) {
     updateData.lastPaymentFailedAt = input.lastPaymentFailedAt;
   }
 
+  // User y Subscription se escriben juntos para evitar estados intermedios raros.
   await prisma.$transaction([
     prisma.user.update({
       where: { id: input.userId },
@@ -212,9 +229,11 @@ async function applyBillingState(input: BillingStateInput) {
   ]);
 }
 
+// Convierte una checkout session completada en estado local de acceso.
 async function applyCheckoutSession(session: Stripe.Checkout.Session, eventId?: string) {
   const userId = session.client_reference_id;
 
+  // Sin userId no podemos vincular pago a un usuario local de forma segura.
   if (!userId) {
     logger.error("Checkout Session missing client_reference_id", { sessionId: session.id });
     return false;
@@ -238,6 +257,7 @@ async function applyCheckoutSession(session: Stripe.Checkout.Session, eventId?: 
   const subscriptionComplete = session.mode === "subscription" && Boolean(subscriptionId);
   const lifetimeComplete = session.mode === "payment" && session.payment_status === "paid";
 
+  // No damos acceso si la sesion aun no esta realmente cerrada/completa.
   if (session.status !== "complete" || (!subscriptionComplete && !lifetimeComplete)) {
     logger.info("Checkout Session is not complete enough to unlock access", {
       sessionId: session.id,
@@ -247,6 +267,7 @@ async function applyCheckoutSession(session: Stripe.Checkout.Session, eventId?: 
     return false;
   }
 
+  // Ya validada, aplicamos estado ACTIVE o LIFETIME segun modo/plan.
   await applyBillingState({
     userId,
     customerId,
@@ -263,11 +284,13 @@ async function applyCheckoutSession(session: Stripe.Checkout.Session, eventId?: 
   return true;
 }
 
+// Fallback de success page: valida ownership y aplica checkout session puntual.
 export async function syncCheckoutSession(sessionId: string, expectedUserId: string) {
   const session = await getStripe().checkout.sessions.retrieve(sessionId, {
     expand: ["subscription"]
   });
 
+  // Defensa clave: evita que un user use session_id de otro.
   if (session.client_reference_id !== expectedUserId) {
     throw new ForbiddenError();
   }
@@ -275,6 +298,7 @@ export async function syncCheckoutSession(sessionId: string, expectedUserId: str
   return applyCheckoutSession(session);
 }
 
+// Reconciliacion en dashboard/upgrade: busca checkout completado mas reciente del customer.
 export async function syncLatestCheckoutSessionForUser(userId: string, customerId: string | null | undefined) {
   if (!customerId) {
     return false;
@@ -297,6 +321,7 @@ export async function syncLatestCheckoutSessionForUser(userId: string, customerI
   return applyCheckoutSession(completedSession);
 }
 
+// Evento invoice.paid: mantiene/renueva acceso activo en suscripciones recurrentes.
 async function applyInvoicePaid(invoice: Stripe.Invoice, eventId: string) {
   const invoiceRecord = invoice as unknown as {
     subscription?: string | Stripe.Subscription | null;
@@ -314,6 +339,7 @@ async function applyInvoicePaid(invoice: Stripe.Invoice, eventId: string) {
   const subscriptionId = stripeId(invoiceRecord.subscription);
 
   if (!subscriptionId) {
+    // Algunas invoices no representan una subscripcion util para gating.
     logger.debug("invoice.paid without subscription", { invoiceId: invoice.id });
     return;
   }
@@ -331,6 +357,7 @@ async function applyInvoicePaid(invoice: Stripe.Invoice, eventId: string) {
     return;
   }
 
+  // Intentamos inferir plan por priceId; si no, mantenemos plan previo.
   const priceId =
     invoiceRecord.lines?.data?.[0]?.price?.id ??
     (stripeSubscription as unknown as { items?: { data?: Array<{ price?: { id?: string } }> } })?.items?.data?.[0]
@@ -351,6 +378,7 @@ async function applyInvoicePaid(invoice: Stripe.Invoice, eventId: string) {
   });
 }
 
+// Evento invoice.payment_failed: marcamos estado PAST_DUE y timestamp de fallo.
 async function applyInvoicePaymentFailed(invoice: Stripe.Invoice, eventId: string) {
   const invoiceRecord = invoice as unknown as {
     subscription?: string | Stripe.Subscription | null;
@@ -382,6 +410,7 @@ async function applyInvoicePaymentFailed(invoice: Stripe.Invoice, eventId: strin
   });
 }
 
+// Evento customer.subscription.deleted: pasa a CANCELED (o mantiene LIFETIME si aplica).
 async function applySubscriptionDeleted(subscription: Stripe.Subscription, eventId: string) {
   const customerId = stripeId(subscription.customer);
   const subscriptionId = subscription.id;
@@ -413,6 +442,7 @@ async function applySubscriptionDeleted(subscription: Stripe.Subscription, event
   });
 }
 
+// Router principal de webhooks Stripe -> handler especifico por tipo de evento.
 export async function processStripeWebhookEvent(event: Stripe.Event) {
   logger.info("Processing Stripe webhook", { eventId: event.id, type: event.type });
 

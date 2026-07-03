@@ -1,10 +1,14 @@
 import Link from "next/link";
 
+// Pantalla de cancelacion de checkout.
+// Solo informa y da CTA para volver a intentar upgrade.
+
 import { AppHeader } from "@/components/layout/app-header";
 import { buttonVariants } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth";
 import { messages } from "@/messages/en";
 
+// Flujo simple: usuario autenticado + mensaje de cancel + boton volver a upgrade.
 export default async function BillingCancelPage() {
   const user = await requireUser();
 

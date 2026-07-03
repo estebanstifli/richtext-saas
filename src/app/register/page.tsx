@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
 
+// Pagina de registro publica.
+// Igual que login: si ya estas autenticado, te saca a dashboard.
+
 import { AuthForm } from "@/components/auth/auth-form";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +13,7 @@ type RegisterPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+// Flujo: check sesion -> plan opcional -> render AuthForm en modo register.
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
   const user = await getCurrentUser();
 
@@ -18,6 +22,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   }
 
   const params = await searchParams;
+  // Si viene plan en query, luego se usa para redirect post-registro.
   const plan = typeof params.plan === "string" ? params.plan : undefined;
 
   return (

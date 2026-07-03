@@ -1,6 +1,9 @@
 import { BadgeEuro, CalendarCheck2, Check, Infinity, Sparkles } from "lucide-react";
 import Link from "next/link";
 
+// Tarjetas de precios reutilizables.
+// Se usan en landing (modo link) y en upgrade (modo checkout).
+
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { type BillingPlan, planKeys } from "@/lib/billing";
@@ -12,6 +15,7 @@ type PricingCardsProps = {
   selectedPlan?: string;
 };
 
+// Renderiza las 3 cards de plan con CTA segun modo.
 export function PricingCards({ mode = "link", selectedPlan }: PricingCardsProps) {
   const planIcons = {
     monthly: BadgeEuro,
@@ -23,6 +27,7 @@ export function PricingCards({ mode = "link", selectedPlan }: PricingCardsProps)
     <div className="grid gap-5 lg:grid-cols-3">
       {planKeys.map((key) => {
         const plan = messages.pricing[key];
+        // Annual va destacado por defecto salvo que selectedPlan diga otra cosa.
         const highlighted = selectedPlan === key || key === "annual";
         const Icon = planIcons[key];
 
@@ -87,9 +92,11 @@ export function PricingCards({ mode = "link", selectedPlan }: PricingCardsProps)
   );
 }
 
+// CTA por plan: o te manda a register con plan, o ejecuta checkout directo via POST.
 function PlanAction({ mode, planKey, text }: { mode: "link" | "checkout"; planKey: BillingPlan; text: string }) {
   if (mode === "checkout") {
     return (
+      // Form tradicional para que el endpoint pueda devolver redirect 303 a Stripe Checkout.
       <form action="/api/billing/checkout" className="w-full" method="POST">
         <input name="plan" type="hidden" value={planKey} />
         <button className={cn(buttonVariants(), "w-full")} type="submit">

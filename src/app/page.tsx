@@ -8,6 +8,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { messages } from "@/messages/en";
 
+// Landing principal del producto.
+// Todo el contenido sale de messages para mantener copy centralizado.
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
@@ -22,8 +24,7 @@ export default function LandingPage() {
                   {messages.landing.heroBadge}
                 </span>
                 <h1 className="text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-                  {messages.landing.heroTitleTop}
-                  Hola
+                  {messages.landing.heroTitleTop}                  
                   <br />
                   <span className="text-primary">{messages.landing.heroTitleAccent}</span>
                 </h1>
@@ -54,6 +55,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {/* Highlights rapidos para explicar valor sin scrollear demasiado. */}
               {messages.landing.heroHighlights.map((highlight, index) => {
                 const Icon = [PenLine, ImageIcon, Cloud, LockKeyhole][index] ?? PenLine;
                 return (
@@ -80,6 +82,7 @@ export default function LandingPage() {
               <p className="text-muted-foreground">{messages.landing.featuresSubtitle}</p>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
+              {/* Features mas detalladas en formato card. */}
               {messages.landing.features.map((feature, index) => {
                 const icons = [Sparkles, LockKeyhole, FileText];
                 const Icon = icons[index] ?? FileText;
@@ -121,6 +124,7 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.7fr_1fr]">
             <h2 className="text-3xl font-bold tracking-normal">{messages.landing.faqTitle}</h2>
             <div className="space-y-4">
+              {/* FAQ simple: pregunta + respuesta. */}
               {messages.landing.faqItems.map((item) => (
                 <div className="border-b border-border pb-4" key={item.question}>
                   <h3 className="font-semibold">{item.question}</h3>

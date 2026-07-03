@@ -1,5 +1,8 @@
 import { redirect } from "next/navigation";
 
+// Pagina de login publica.
+// Si ya hay sesion activa, no tiene sentido quedarse aqui: mandamos al dashboard.
+
 import { AuthForm } from "@/components/auth/auth-form";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +13,7 @@ type LoginPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+// Flujo: check sesion -> resolver plan opcional -> render AuthForm en modo login.
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const user = await getCurrentUser();
 
@@ -18,6 +22,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   const params = await searchParams;
+  // Plan opcional para mantener contexto si viene desde pricing.
   const plan = typeof params.plan === "string" ? params.plan : undefined;
 
   return (

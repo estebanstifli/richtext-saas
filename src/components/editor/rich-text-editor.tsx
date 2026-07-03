@@ -1,5 +1,8 @@
 "use client";
 
+// Editor rico principal (TipTap) de la app.
+// Aqui vive casi toda la UX: toolbar, autosave, links, colores e imagenes.
+
 import CharacterCount from "@tiptap/extension-character-count";
 import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
@@ -61,6 +64,7 @@ type RichTextEditorProps = {
   initialContent: JSONContent;
 };
 
+// Presets de ancho para imagenes del editor.
 const imageWidthOptions = [
   { label: "Small image", value: "35%" },
   { label: "Medium image", value: "55%" },
@@ -85,6 +89,7 @@ const highlightColorOptions = [
 ] as const;
 
 const RichImageExtension = ImageExtension.extend({
+  // Extendemos Image para guardar align/width como atributos controlados.
   addAttributes() {
     return {
       ...(this.parent?.() ?? {}),
@@ -116,6 +121,8 @@ export function RichTextEditor({ documentId, editable = true, initialContent }: 
   const [linkUrl, setLinkUrl] = useState("");
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [showLinkEditor, setShowLinkEditor] = useState(false);
+
+  // Instancia del editor con extensiones y callbacks de estado.
   const editor = useEditor({
     editable,
     extensions: [
@@ -164,6 +171,7 @@ export function RichTextEditor({ documentId, editable = true, initialContent }: 
       return;
     }
 
+    // Solo guardamos si hay cambios reales contra lo ultimo persistido.
     const currentContent = JSON.stringify(editor.getJSON());
 
     if (currentContent === lastSavedContentRef.current) {
@@ -215,6 +223,7 @@ export function RichTextEditor({ documentId, editable = true, initialContent }: 
       return;
     }
 
+    // Autosave con debounce de 2s para no spamear la API.
     const timeout = window.setTimeout(() => {
       void saveDocument();
     }, 2000);
@@ -292,6 +301,7 @@ export function RichTextEditor({ documentId, editable = true, initialContent }: 
     setImageUploadState("uploading");
 
     try {
+      // Subida al endpoint del documento; luego insertamos la URL en TipTap.
       const response = await fetch(`/api/documents/${documentId}/assets`, {
         method: "POST",
         body: formData
@@ -345,6 +355,7 @@ export function RichTextEditor({ documentId, editable = true, initialContent }: 
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+      {/* Toolbar superior: formato, color, links, imagen y acciones de guardado. */}
       <div className="flex flex-col gap-3 border-b border-border bg-muted/50 p-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-1">
           <ToolbarButton
