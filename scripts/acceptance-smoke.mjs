@@ -4,6 +4,7 @@
 const baseUrl = normalizeBaseUrl(
   process.env.TEST_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 );
+// Flags para controlar partes sensibles/costosas del smoke.
 const runStripeCheckout = process.env.TEST_STRIPE_CHECKOUT === "true";
 const allowLiveStripe = process.env.TEST_ALLOW_LIVE_STRIPE === "true";
 
@@ -172,6 +173,7 @@ console.log(`Created test user: ${createdEmail}`);
 
 // Simula submit de form server action reutilizando hidden inputs de Next.
 async function submitServerAction(path, fields) {
+  // Leemos el HTML para capturar hidden inputs que Next usa internamente en server actions.
   const html = await fetchText(path);
   const hiddenFields = extractHiddenFields(html);
   const form = new FormData();
@@ -192,6 +194,7 @@ async function submitServerAction(path, fields) {
 }
 
 async function fetchText(path) {
+  // Helper para asserts de páginas html 2xx.
   const response = await request(path);
   const text = await response.text();
   assert(response.ok, `Expected ${path} to return 2xx, got ${response.status}`);
@@ -201,6 +204,7 @@ async function fetchText(path) {
 async function request(path, options = {}, includeCookies = true) {
   const headers = new Headers(options.headers || {});
 
+  // Simulamos navegador: reenviamos cookies acumuladas.
   if (includeCookies && jar.header()) {
     headers.set("Cookie", jar.header());
   }
@@ -215,6 +219,7 @@ async function request(path, options = {}, includeCookies = true) {
 }
 
 function extractHiddenFields(html) {
+  // Parser regex simple: suficiente para inputs hidden del markup actual.
   const fields = {};
   const inputs = html.match(/<input[^>]+type="hidden"[^>]*>/g) || [];
 
@@ -239,6 +244,7 @@ function splitCombinedSetCookie(header) {
     return [];
   }
 
+  // Algunos runtimes unen varios Set-Cookie en un solo header, esto los separa.
   return header.split(/,(?=\s*[^;,=]+=[^;,]+)/g);
 }
 
@@ -271,6 +277,7 @@ function assertIncludes(text, expected) {
 }
 
 function assert(condition, message) {
+  // Estilo tiny test-runner: fail fast con mensaje explicito.
   if (!condition) {
     throw new Error(message);
   }
@@ -296,5 +303,6 @@ function decodeHtml(value) {
 }
 
 function normalizeBaseUrl(value) {
+  // Evita dobles slashes al concatenar baseUrl + path.
   return value.replace(/\/$/, "");
 }

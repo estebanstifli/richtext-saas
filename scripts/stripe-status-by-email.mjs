@@ -22,6 +22,7 @@ const stripe = new Stripe(stripeSecretKey);
 const customers = await findCustomersByEmail(email);
 
 if (customers.length === 0) {
+  // Caso comun en soporte: email existe en app pero nunca llego a crearse customer en Stripe.
   console.log(JSON.stringify({ email, found: false, message: "No Stripe customer found for email." }, null, 2));
   process.exit(0);
 }
@@ -74,6 +75,7 @@ for (const customer of customers) {
   });
 }
 
+// Salida final en JSON para poder pipear a jq, guardar evidencia o pegar en ticket.
 console.log(JSON.stringify({ email, found: true, reports }, null, 2));
 
 async function findCustomersByEmail(customerEmail) {
@@ -96,10 +98,12 @@ async function findCustomersByEmail(customerEmail) {
 }
 
 function toIso(timestamp) {
+  // Stripe manda timestamps en segundos (unix), JS Date usa milisegundos.
   return typeof timestamp === "number" ? new Date(timestamp * 1000).toISOString() : null;
 }
 
 function buildSubscriptionReport(subscription) {
+  // Extraemos priceIds porque ahi es donde "vive" el plan real configurado en Stripe.
   const priceIds = subscription.items.data.map((item) => item.price?.id).filter(Boolean);
   const matchedPlans = unique(priceIds.map((priceId) => planByPriceId.get(priceId)).filter(Boolean));
 
@@ -149,14 +153,17 @@ function buildPlanMap() {
 }
 
 function hasConfiguredPrices() {
+  // Si no hay price IDs configurados, relajamos la heuristica para no dar falsos negativos.
   return planByPriceId.size > 0;
 }
 
 function unique(values) {
+  // Dedupe rapido sin dependencias.
   return Array.from(new Set(values));
 }
 
 function escapeStripeSearchValue(value) {
+  // Escape minimo para query parser de Stripe Search.
   return value.replaceAll("\\", "\\\\").replaceAll("'", "\\'");
 }
 
@@ -196,6 +203,7 @@ function loadDotEnv() {
 }
 
 function fail(message) {
+  // Salida de error homogénea para CI/local.
   console.error(message);
   process.exit(1);
 }
